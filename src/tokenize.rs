@@ -1,4 +1,37 @@
-use std::{error::Error, str::Chars};
+use std::char;
+use std::fmt;
+use std::str::Chars;
+
+pub type Result<T> = std::result::Result<T, TokenizeError>;
+
+#[derive(Debug)]
+pub enum TokenizeError {
+    EOF,
+    UnexpectedChar(char, char), // (expected, actual)
+}
+
+impl fmt::Display for TokenizeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            TokenizeError::EOF => write!(f, "reached EOF"),
+            TokenizeError::UnexpectedChar(expected, actual) => {
+                write!(f, "expected {} but got {}", expected, actual)
+            }
+        }
+    }
+}
+
+impl std::error::Error for TokenizeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            TokenizeError::EOF => None,
+            // The cause is the underlying implementation error type. Is implicitly
+            // cast to the trait object `&error::Error`. This works because the
+            // underlying type already implements the `Error` trait.
+            TokenizeError::UnexpectedChar(..) => None,
+        }
+    }
+}
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
@@ -24,21 +57,21 @@ impl<'a> Tokenizer<'a> {
         self.chars.peek()
     }
 
-    fn expect_char(&mut self, expected: char) -> Result<(), Box<dyn Error>> {
+    fn expect_char(&mut self, expected: char) -> Result<()> {
         match self.peek() {
-            Some(ch) => {
-                if *ch == expected {
+            Some(actual) => {
+                if *actual == expected {
                     self.next();
                     Ok(())
                 } else {
-                    Err(format!("expected {} but got {}", expected, ch).into())
+                    Err(TokenizeError::UnexpectedChar(expected, *actual))
                 }
             }
-            None => Err("EOF".into()),
+            None => Err(TokenizeError::EOF),
         }
     }
 
-    fn doctype(&mut self) -> Result<Token, Box<dyn Error>> {
+    fn doctype(&mut self) -> Result<Token> {
         for c in "<!DOCTYPE html>".chars() {
             self.expect_char(c)?;
         }
@@ -46,7 +79,7 @@ impl<'a> Tokenizer<'a> {
     }
 }
 
-pub fn tokenize(source: &str) -> Result<Vec<Token>, Box<dyn Error>> {
+pub fn tokenize(source: &str) -> Result<Vec<Token>> {
     let mut tokens = Vec::new();
     let mut t = Tokenizer::new(source);
 
