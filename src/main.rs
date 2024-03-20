@@ -1,5 +1,7 @@
 use std::error::Error;
 
+mod tokenize;
+
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
@@ -8,7 +10,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let source = std::fs::read_to_string(&args[1])?;
+    let tokens: Vec<tokenize::Token> = tokenize::tokenize(&source)?;
 
-    println!("source = {}\n", source);
+    println!("tokens = {:?}\n", tokens);
     Ok(())
 }
