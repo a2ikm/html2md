@@ -7,6 +7,7 @@ pub type Result<T> = std::result::Result<T, TokenizeError>;
 #[derive(Debug, PartialEq)]
 pub enum TokenizeError {
     EOF,
+    NoTag,
     UnexpectedChar(char, char), // (expected, actual)
 }
 
@@ -14,6 +15,7 @@ impl fmt::Display for TokenizeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             TokenizeError::EOF => write!(f, "reached EOF"),
+            TokenizeError::NoTag => write!(f, "no tag"),
             TokenizeError::UnexpectedChar(expected, actual) => {
                 write!(f, "expected {} but got {}", expected, actual)
             }
@@ -25,9 +27,7 @@ impl std::error::Error for TokenizeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
             TokenizeError::EOF => None,
-            // The cause is the underlying implementation error type. Is implicitly
-            // cast to the trait object `&error::Error`. This works because the
-            // underlying type already implements the `Error` trait.
+            TokenizeError::NoTag => None,
             TokenizeError::UnexpectedChar(..) => None,
         }
     }
@@ -36,6 +36,12 @@ impl std::error::Error for TokenizeError {
 #[derive(Debug, PartialEq)]
 pub enum Token {
     Doctype,
+    Element(Element),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Element {
+    tag: String,
 }
 
 struct Tokenizer<'a> {
@@ -76,6 +82,29 @@ impl<'a> Tokenizer<'a> {
             self.expect_char(c)?;
         }
         Ok(Token::Doctype)
+    }
+
+    fn tag(&mut self) -> Result<String> {
+        let mut tag = String::new();
+        loop {
+            match self.chars.next_if(|c| c.is_alphanumeric()) {
+                Some(c) => tag.push(c),
+                None => break,
+            }
+        }
+
+        if tag.len() > 0 {
+            Ok(tag)
+        } else {
+            Err(TokenizeError::NoTag)
+        }
+    }
+
+    fn element(&mut self) -> Result<Token> {
+        _ = self.expect_char('<')?;
+        let tag = self.tag()?;
+        _ = self.expect_char('>')?;
+        Ok(Token::Element(Element { tag }))
     }
 }
 
@@ -132,6 +161,59 @@ mod tests {
                     token
                 ),
                 Err(e) => assert_eq!(TokenizeError::UnexpectedChar('<', '>'), e),
+            }
+        }
+    }
+
+    #[test]
+    fn tokenizer_element() {
+        {
+            let mut t = Tokenizer::new("<a>");
+            match t.element() {
+                Ok(Token::Element(element)) => assert_eq!("a", element.tag),
+                Ok(token) => assert!(false, "Expected Token::Element, but got {:?}", token),
+                Err(e) => assert!(false, "Expected Ok but got Err: error = {}", e),
+            }
+        }
+        {
+            let mut t = Tokenizer::new("<table>");
+            match t.element() {
+                Ok(Token::Element(element)) => assert_eq!("table", element.tag),
+                Ok(token) => assert!(false, "Expected Token::Element, but got {:?}", token),
+                Err(e) => assert!(false, "Expected Ok but got Err: error = {}", e),
+            }
+        }
+        {
+            let mut t = Tokenizer::new("<>");
+            match t.element() {
+                Ok(token) => assert!(
+                    false,
+                    "Expected Err(TokenizeError::NoTag), but got {:?}",
+                    token
+                ),
+                Err(e) => assert_eq!(e, TokenizeError::NoTag),
+            }
+        }
+        {
+            let mut t = Tokenizer::new("a>");
+            match t.element() {
+                Ok(token) => assert!(
+                    false,
+                    "Expected Err(TokenizeError::UnexpectedChar), but got {:?}",
+                    token
+                ),
+                Err(e) => assert_eq!(e, TokenizeError::UnexpectedChar('<', 'a')),
+            }
+        }
+        {
+            let mut t = Tokenizer::new("<a");
+            match t.element() {
+                Ok(token) => assert!(
+                    false,
+                    "Expected Err(TokenizeError::NoTag), but got {:?}",
+                    token
+                ),
+                Err(e) => assert_eq!(e, TokenizeError::EOF),
             }
         }
     }
