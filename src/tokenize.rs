@@ -123,5 +123,16 @@ mod tests {
                 Err(e) => assert_eq!(TokenizeError::EOF, e),
             }
         }
+        {
+            let mut t = Tokenizer::new(">");
+            match t.doctype() {
+                Ok(token) => assert!(
+                    false,
+                    "Expected Err(UnexpectedChar) but got Ok: token = {:?}",
+                    token
+                ),
+                Err(e) => assert_eq!(TokenizeError::UnexpectedChar('<', '>'), e),
+            }
+        }
     }
 }
