@@ -4,7 +4,7 @@ use std::str::Chars;
 
 pub type Result<T> = std::result::Result<T, TokenizeError>;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TokenizeError {
     EOF,
     UnexpectedChar(char, char), // (expected, actual)
@@ -107,6 +107,20 @@ mod tests {
             match t.doctype() {
                 Ok(token) => assert!(false, "Expected Err but got Ok: token = {:?}", token),
                 Err(_) => assert!(true),
+            }
+        }
+        {
+            let mut t = Tokenizer::new("");
+            match t.doctype() {
+                Ok(token) => assert!(false, "Expected Err(EOF) but got Ok: token = {:?}", token),
+                Err(e) => assert_eq!(TokenizeError::EOF, e),
+            }
+        }
+        {
+            let mut t = Tokenizer::new("<");
+            match t.doctype() {
+                Ok(token) => assert!(false, "Expected Err(EOF) but got Ok: token = {:?}", token),
+                Err(e) => assert_eq!(TokenizeError::EOF, e),
             }
         }
     }
