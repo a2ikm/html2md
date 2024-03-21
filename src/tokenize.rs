@@ -37,6 +37,7 @@ impl std::error::Error for TokenizeError {
 pub enum Token {
     Doctype,
     Element(Element),
+    Text(String),
 }
 
 #[derive(Debug, PartialEq)]
@@ -77,6 +78,13 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
+    fn peek_char(&mut self, expected: char) -> Result<bool> {
+        match self.chars.peek() {
+            Some(actual) => Ok(*actual == expected),
+            None => Err(TokenizeError::EOF),
+        }
+    }
+
     fn doctype(&mut self) -> Result<Token> {
         for c in "<!DOCTYPE html>".chars() {
             self.expect_char(c)?;
@@ -106,6 +114,26 @@ impl<'a> Tokenizer<'a> {
         _ = self.expect_char('>')?;
         Ok(Token::Element(Element { tag }))
     }
+
+    fn text(&mut self) -> Result<Token> {
+        let mut content = String::new();
+        loop {
+            match self.chars.next_if(|c| *c != '<') {
+                Some(c) => content.push(c),
+                None => break,
+            }
+        }
+
+        Ok(Token::Text(content))
+    }
+
+    fn element_or_text(&mut self) -> Result<Token> {
+        match self.peek_char('<') {
+            Ok(true) => self.element(),
+            Ok(false) => self.text(),
+            Err(e) => Err(e),
+        }
+    }
 }
 
 pub fn tokenize(source: &str) -> Result<Vec<Token>> {
@@ -114,6 +142,14 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>> {
 
     let doctype = t.doctype()?;
     tokens.push(doctype);
+
+    loop {
+        match t.element_or_text() {
+            Ok(token) => tokens.push(token),
+            Err(TokenizeError::EOF) => break,
+            Err(e) => return Err(e),
+        }
+    }
 
     Ok(tokens)
 }
@@ -217,4 +253,10 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn tokenizer_text() {}
+
+    #[test]
+    fn tokenizer_element_or_text() {}
 }
