@@ -300,5 +300,16 @@ mod tests {
                 Err(e) => assert!(false, "Expected Ok(Token::Element(...) but got {:?}", e),
             }
         }
+        {
+            let mut t = Tokenizer::new("");
+            match t.element_or_text() {
+                Ok(token) => assert!(
+                    false,
+                    "Expected Err(TokenizerError::EOF) but got Ok({:?})",
+                    token
+                ),
+                Err(e) => assert_eq!(e, TokenizeError::EOF),
+            }
+        }
     }
 }
