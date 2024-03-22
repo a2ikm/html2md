@@ -36,13 +36,13 @@ impl std::error::Error for TokenizeError {
 #[derive(Debug, PartialEq)]
 pub enum Token {
     Doctype,
-    Element(Element),
+    Tag(Tag),
     Text(String),
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Element {
-    tag: String,
+pub struct Tag {
+    name: String,
 }
 
 struct Tokenizer<'a> {
@@ -92,7 +92,7 @@ impl<'a> Tokenizer<'a> {
         Ok(Token::Doctype)
     }
 
-    fn tag(&mut self) -> Result<String> {
+    fn tag_name(&mut self) -> Result<String> {
         let mut tag = String::new();
         loop {
             match self.chars.next_if(|c| c.is_alphanumeric()) {
@@ -108,11 +108,11 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn element(&mut self) -> Result<Token> {
+    fn tag(&mut self) -> Result<Token> {
         _ = self.expect_char('<')?;
-        let tag = self.tag()?;
+        let name = self.tag_name()?;
         _ = self.expect_char('>')?;
-        Ok(Token::Element(Element { tag }))
+        Ok(Token::Tag(Tag { name: name }))
     }
 
     fn text(&mut self) -> Result<Token> {
@@ -127,9 +127,9 @@ impl<'a> Tokenizer<'a> {
         Ok(Token::Text(content))
     }
 
-    fn element_or_text(&mut self) -> Result<Token> {
+    fn tag_or_text(&mut self) -> Result<Token> {
         match self.peek_char('<') {
-            Ok(true) => self.element(),
+            Ok(true) => self.tag(),
             Ok(false) => self.text(),
             Err(e) => Err(e),
         }
@@ -144,7 +144,7 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>> {
     tokens.push(doctype);
 
     loop {
-        match t.element_or_text() {
+        match t.tag_or_text() {
             Ok(token) => tokens.push(token),
             Err(TokenizeError::EOF) => break,
             Err(e) => return Err(e),
@@ -172,14 +172,14 @@ mod tests {
                     tokens,
                     vec![
                         Token::Doctype,
-                        Token::Element(Element {
-                            tag: String::from("html")
+                        Token::Tag(Tag {
+                            name: String::from("html")
                         }),
-                        Token::Element(Element {
-                            tag: String::from("body")
+                        Token::Tag(Tag {
+                            name: String::from("body")
                         }),
-                        Token::Element(Element {
-                            tag: String::from("p")
+                        Token::Tag(Tag {
+                            name: String::from("p")
                         }),
                         Token::Text(String::from("hello")),
                     ]
@@ -233,26 +233,26 @@ mod tests {
     }
 
     #[test]
-    fn test_tokenizer_element() {
+    fn test_tokenizer_tag() {
         {
             let mut t = Tokenizer::new("<a>");
-            match t.element() {
-                Ok(Token::Element(element)) => assert_eq!("a", element.tag),
-                Ok(token) => assert!(false, "Expected Token::Element, but got {:?}", token),
+            match t.tag() {
+                Ok(Token::Tag(tag)) => assert_eq!("a", tag.name),
+                Ok(token) => assert!(false, "Expected Token::Tag, but got {:?}", token),
                 Err(e) => assert!(false, "Expected Ok but got Err: error = {}", e),
             }
         }
         {
             let mut t = Tokenizer::new("<table>");
-            match t.element() {
-                Ok(Token::Element(element)) => assert_eq!("table", element.tag),
-                Ok(token) => assert!(false, "Expected Token::Element, but got {:?}", token),
+            match t.tag() {
+                Ok(Token::Tag(tag)) => assert_eq!("table", tag.name),
+                Ok(token) => assert!(false, "Expected Token::Tag, but got {:?}", token),
                 Err(e) => assert!(false, "Expected Ok but got Err: error = {}", e),
             }
         }
         {
             let mut t = Tokenizer::new("<>");
-            match t.element() {
+            match t.tag() {
                 Ok(token) => assert!(
                     false,
                     "Expected Err(TokenizeError::NoTag), but got {:?}",
@@ -263,7 +263,7 @@ mod tests {
         }
         {
             let mut t = Tokenizer::new("a>");
-            match t.element() {
+            match t.tag() {
                 Ok(token) => assert!(
                     false,
                     "Expected Err(TokenizeError::UnexpectedChar), but got {:?}",
@@ -274,7 +274,7 @@ mod tests {
         }
         {
             let mut t = Tokenizer::new("<a");
-            match t.element() {
+            match t.tag() {
                 Ok(token) => assert!(
                     false,
                     "Expected Err(TokenizeError::NoTag), but got {:?}",
@@ -314,10 +314,10 @@ mod tests {
     }
 
     #[test]
-    fn test_tokenizer_element_or_text() {
+    fn test_tokenizer_tag_or_text() {
         {
             let mut t = Tokenizer::new("abcde");
-            match t.element_or_text() {
+            match t.tag_or_text() {
                 Ok(Token::Text(content)) => assert_eq!(content, "abcde"),
                 Ok(token) => assert!(false, "Expected Ok(Token::Text(\"\") but got {:?}", token),
                 Err(e) => assert!(false, "Expected Ok(Token::Text(\"\") but got {:?}", e),
@@ -325,15 +325,15 @@ mod tests {
         }
         {
             let mut t = Tokenizer::new("<a>");
-            match t.element_or_text() {
-                Ok(Token::Element(element)) => assert_eq!("a", element.tag),
-                Ok(token) => assert!(false, "Expected Ok(Token::Element(...) but got {:?}", token),
-                Err(e) => assert!(false, "Expected Ok(Token::Element(...) but got {:?}", e),
+            match t.tag_or_text() {
+                Ok(Token::Tag(tag)) => assert_eq!("a", tag.name),
+                Ok(token) => assert!(false, "Expected Ok(Token::Tag(...) but got {:?}", token),
+                Err(e) => assert!(false, "Expected Ok(Token::Tag(...) but got {:?}", e),
             }
         }
         {
             let mut t = Tokenizer::new("");
-            match t.element_or_text() {
+            match t.tag_or_text() {
                 Ok(token) => assert!(
                     false,
                     "Expected Err(TokenizerError::EOF) but got Ok({:?})",
