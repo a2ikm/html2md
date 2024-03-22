@@ -159,6 +159,37 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_tokenize() {
+        {
+            match tokenize("<!DOCTYPE html>") {
+                Ok(tokens) => assert_eq!(tokens, vec![Token::Doctype]),
+                Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
+            }
+        }
+        {
+            match tokenize("<!DOCTYPE html><html><body><p>hello") {
+                Ok(tokens) => assert_eq!(
+                    tokens,
+                    vec![
+                        Token::Doctype,
+                        Token::Element(Element {
+                            tag: String::from("html")
+                        }),
+                        Token::Element(Element {
+                            tag: String::from("body")
+                        }),
+                        Token::Element(Element {
+                            tag: String::from("p")
+                        }),
+                        Token::Text(String::from("hello")),
+                    ]
+                ),
+                Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
+            }
+        }
+    }
+
+    #[test]
     fn test_tokenizer_doctype() {
         {
             let mut t = Tokenizer::new("<!DOCTYPE html>");
