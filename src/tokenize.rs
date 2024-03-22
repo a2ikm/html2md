@@ -159,7 +159,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn tokenizer_doctype() {
+    fn test_tokenizer_doctype() {
         {
             let mut t = Tokenizer::new("<!DOCTYPE html>");
             match t.doctype() {
@@ -202,7 +202,7 @@ mod tests {
     }
 
     #[test]
-    fn tokenizer_element() {
+    fn test_tokenizer_element() {
         {
             let mut t = Tokenizer::new("<a>");
             match t.element() {
@@ -255,7 +255,7 @@ mod tests {
     }
 
     #[test]
-    fn tokenizer_text() {
+    fn test_tokenizer_text() {
         {
             let mut t = Tokenizer::new("");
             match t.text() {
@@ -283,7 +283,7 @@ mod tests {
     }
 
     #[test]
-    fn tokenizer_element_or_text() {
+    fn test_tokenizer_element_or_text() {
         {
             let mut t = Tokenizer::new("abcde");
             match t.element_or_text() {
