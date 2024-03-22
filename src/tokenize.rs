@@ -283,5 +283,22 @@ mod tests {
     }
 
     #[test]
-    fn tokenizer_element_or_text() {}
+    fn tokenizer_element_or_text() {
+        {
+            let mut t = Tokenizer::new("abcde");
+            match t.element_or_text() {
+                Ok(Token::Text(content)) => assert_eq!(content, "abcde"),
+                Ok(token) => assert!(false, "Expected Ok(Token::Text(\"\") but got {:?}", token),
+                Err(e) => assert!(false, "Expected Ok(Token::Text(\"\") but got {:?}", e),
+            }
+        }
+        {
+            let mut t = Tokenizer::new("<a>");
+            match t.element_or_text() {
+                Ok(Token::Element(element)) => assert_eq!("a", element.tag),
+                Ok(token) => assert!(false, "Expected Ok(Token::Element(...) but got {:?}", token),
+                Err(e) => assert!(false, "Expected Ok(Token::Element(...) but got {:?}", e),
+            }
+        }
+    }
 }
