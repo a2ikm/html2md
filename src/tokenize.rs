@@ -7,6 +7,7 @@ pub type Result<T> = std::result::Result<T, TokenizeError>;
 #[derive(Debug, PartialEq)]
 pub enum TokenizeError {
     EOF,
+    Malformed,
     NoTag,
     UnexpectedChar(char, char), // (expected, actual)
 }
@@ -15,6 +16,7 @@ impl fmt::Display for TokenizeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             TokenizeError::EOF => write!(f, "reached EOF"),
+            TokenizeError::Malformed => write!(f, "malformed"),
             TokenizeError::NoTag => write!(f, "no tag"),
             TokenizeError::UnexpectedChar(expected, actual) => {
                 write!(f, "expected {} but got {}", expected, actual)
@@ -28,6 +30,7 @@ impl std::error::Error for TokenizeError {
         match *self {
             TokenizeError::EOF => None,
             TokenizeError::NoTag => None,
+            TokenizeError::Malformed => None,
             TokenizeError::UnexpectedChar(..) => None,
         }
     }
@@ -41,8 +44,16 @@ pub enum Token {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum TagKind {
+    Open,
+    Close,
+    Void,
+}
+
+#[derive(Debug, PartialEq)]
 pub struct Tag {
     name: String,
+    kind: TagKind,
 }
 
 struct Tokenizer<'a> {
@@ -62,6 +73,13 @@ impl<'a> Tokenizer<'a> {
 
     fn peek(&mut self) -> Option<&char> {
         self.chars.peek()
+    }
+
+    fn consume_char(&mut self, expected: char) -> bool {
+        match self.chars.next_if(|c| *c == expected) {
+            Some(_) => true,
+            None => false,
+        }
     }
 
     fn expect_char(&mut self, expected: char) -> Result<()> {
@@ -110,9 +128,29 @@ impl<'a> Tokenizer<'a> {
 
     fn tag(&mut self) -> Result<Token> {
         _ = self.expect_char('<')?;
+        let beginning_with_slash = self.consume_char('/');
         let name = self.tag_name()?;
+        let ending_with_slash = self.consume_char('/');
         _ = self.expect_char('>')?;
-        Ok(Token::Tag(Tag { name: name }))
+
+        if beginning_with_slash && ending_with_slash {
+            Err(TokenizeError::Malformed)
+        } else if beginning_with_slash {
+            Ok(Token::Tag(Tag {
+                name,
+                kind: TagKind::Close,
+            }))
+        } else if ending_with_slash {
+            Ok(Token::Tag(Tag {
+                name,
+                kind: TagKind::Void,
+            }))
+        } else {
+            Ok(Token::Tag(Tag {
+                name,
+                kind: TagKind::Open,
+            }))
+        }
     }
 
     fn text(&mut self) -> Result<Token> {
@@ -167,21 +205,40 @@ mod tests {
             }
         }
         {
-            match tokenize("<!DOCTYPE html><html><body><p>hello") {
+            match tokenize("<!DOCTYPE html><html><body><p>hello</p><hr/></body></html>") {
                 Ok(tokens) => assert_eq!(
                     tokens,
                     vec![
                         Token::Doctype,
                         Token::Tag(Tag {
-                            name: String::from("html")
+                            name: String::from("html"),
+                            kind: TagKind::Open,
                         }),
                         Token::Tag(Tag {
-                            name: String::from("body")
+                            name: String::from("body"),
+                            kind: TagKind::Open,
                         }),
                         Token::Tag(Tag {
-                            name: String::from("p")
+                            name: String::from("p"),
+                            kind: TagKind::Open,
                         }),
                         Token::Text(String::from("hello")),
+                        Token::Tag(Tag {
+                            name: String::from("p"),
+                            kind: TagKind::Close,
+                        }),
+                        Token::Tag(Tag {
+                            name: String::from("hr"),
+                            kind: TagKind::Void,
+                        }),
+                        Token::Tag(Tag {
+                            name: String::from("body"),
+                            kind: TagKind::Close,
+                        }),
+                        Token::Tag(Tag {
+                            name: String::from("html"),
+                            kind: TagKind::Close,
+                        }),
                     ]
                 ),
                 Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
@@ -237,7 +294,13 @@ mod tests {
         {
             let mut t = Tokenizer::new("<a>");
             match t.tag() {
-                Ok(Token::Tag(tag)) => assert_eq!("a", tag.name),
+                Ok(Token::Tag(tag)) => assert_eq!(
+                    tag,
+                    Tag {
+                        name: String::from("a"),
+                        kind: TagKind::Open,
+                    }
+                ),
                 Ok(token) => assert!(false, "Expected Token::Tag, but got {:?}", token),
                 Err(e) => assert!(false, "Expected Ok but got Err: error = {}", e),
             }
@@ -245,7 +308,13 @@ mod tests {
         {
             let mut t = Tokenizer::new("<table>");
             match t.tag() {
-                Ok(Token::Tag(tag)) => assert_eq!("table", tag.name),
+                Ok(Token::Tag(tag)) => assert_eq!(
+                    tag,
+                    Tag {
+                        name: String::from("table"),
+                        kind: TagKind::Open,
+                    }
+                ),
                 Ok(token) => assert!(false, "Expected Token::Tag, but got {:?}", token),
                 Err(e) => assert!(false, "Expected Ok but got Err: error = {}", e),
             }
@@ -326,7 +395,13 @@ mod tests {
         {
             let mut t = Tokenizer::new("<a>");
             match t.tag_or_text() {
-                Ok(Token::Tag(tag)) => assert_eq!("a", tag.name),
+                Ok(Token::Tag(tag)) => assert_eq!(
+                    tag,
+                    Tag {
+                        name: String::from("a"),
+                        kind: TagKind::Open,
+                    }
+                ),
                 Ok(token) => assert!(false, "Expected Ok(Token::Tag(...) but got {:?}", token),
                 Err(e) => assert!(false, "Expected Ok(Token::Tag(...) but got {:?}", e),
             }
