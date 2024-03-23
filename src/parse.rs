@@ -37,8 +37,8 @@ pub enum Node<'a> {
 
 #[derive(Debug, PartialEq)]
 pub struct Element<'a> {
-    tag: &'a str,
-    children: Vec<Node<'a>>,
+    pub tag: &'a str,
+    pub children: Vec<Node<'a>>,
 }
 
 pub fn parse<'a>(tokens: &'a Vec<tokenize::Token>) -> Result<Node<'a>> {
