@@ -1,5 +1,6 @@
 use std::error::Error;
 
+mod parse;
 mod tokenize;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -10,8 +11,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let source = std::fs::read_to_string(&args[1])?;
-    let tokens: Vec<tokenize::Token> = tokenize::Tokenizer::new(&source).tokenize()?;
+    let tokens = tokenize::Tokenizer::new(&source).tokenize()?;
+    let html = parse::parse(&tokens)?;
 
-    println!("tokens = {:?}\n", tokens);
+    println!("html = {:?}\n", html);
     Ok(())
 }

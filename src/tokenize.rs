@@ -52,8 +52,8 @@ pub enum TagKind {
 
 #[derive(Debug, PartialEq)]
 pub struct Tag {
-    name: String,
-    kind: TagKind,
+    pub name: String,
+    pub kind: TagKind,
 }
 
 pub struct Tokenizer<'a> {
@@ -137,7 +137,7 @@ impl<'a> Tokenizer<'a> {
         }
 
         if tag.len() > 0 {
-            Ok(tag)
+            Ok(tag.to_ascii_lowercase())
         } else {
             Err(TokenizeError::NoTag)
         }
@@ -295,6 +295,20 @@ mod tests {
     fn test_tokenizer_tag() {
         {
             let mut t = Tokenizer::new("<a>");
+            match t.tag() {
+                Ok(Token::Tag(tag)) => assert_eq!(
+                    tag,
+                    Tag {
+                        name: String::from("a"),
+                        kind: TagKind::Open,
+                    }
+                ),
+                Ok(token) => assert!(false, "Expected Token::Tag, but got {:?}", token),
+                Err(e) => assert!(false, "Expected Ok but got Err: error = {}", e),
+            }
+        }
+        {
+            let mut t = Tokenizer::new("<A>");
             match t.tag() {
                 Ok(Token::Tag(tag)) => assert_eq!(
                     tag,
