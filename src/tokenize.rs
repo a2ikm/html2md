@@ -56,15 +56,32 @@ pub struct Tag {
     kind: TagKind,
 }
 
-struct Tokenizer<'a> {
+pub struct Tokenizer<'a> {
     chars: std::iter::Peekable<Chars<'a>>,
 }
 
 impl<'a> Tokenizer<'a> {
-    fn new(source: &'a str) -> Self {
+    pub fn new(source: &'a str) -> Self {
         Self {
             chars: source.chars().peekable(),
         }
+    }
+
+    pub fn tokenize(&mut self) -> Result<Vec<Token>> {
+        let mut tokens = Vec::new();
+
+        let doctype = self.doctype()?;
+        tokens.push(doctype);
+
+        loop {
+            match self.tag_or_text() {
+                Ok(token) => tokens.push(token),
+                Err(TokenizeError::EOF) => break,
+                Err(e) => return Err(e),
+            }
+        }
+
+        Ok(tokens)
     }
 
     fn next(&mut self) -> Option<char> {
@@ -174,38 +191,23 @@ impl<'a> Tokenizer<'a> {
     }
 }
 
-pub fn tokenize(source: &str) -> Result<Vec<Token>> {
-    let mut tokens = Vec::new();
-    let mut t = Tokenizer::new(source);
-
-    let doctype = t.doctype()?;
-    tokens.push(doctype);
-
-    loop {
-        match t.tag_or_text() {
-            Ok(token) => tokens.push(token),
-            Err(TokenizeError::EOF) => break,
-            Err(e) => return Err(e),
-        }
-    }
-
-    Ok(tokens)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_tokenize() {
+    fn test_tokenizer_tokenize() {
         {
-            match tokenize("<!DOCTYPE html>") {
+            let mut t = Tokenizer::new("<!DOCTYPE html>");
+            match t.tokenize() {
                 Ok(tokens) => assert_eq!(tokens, vec![Token::Doctype]),
                 Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
             }
         }
         {
-            match tokenize("<!DOCTYPE html><html><body><p>hello</p><hr/></body></html>") {
+            let mut t =
+                Tokenizer::new("<!DOCTYPE html><html><body><p>hello</p><hr/></body></html>");
+            match t.tokenize() {
                 Ok(tokens) => assert_eq!(
                     tokens,
                     vec![

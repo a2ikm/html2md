@@ -10,7 +10,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let source = std::fs::read_to_string(&args[1])?;
-    let tokens: Vec<tokenize::Token> = tokenize::tokenize(&source)?;
+    let tokens: Vec<tokenize::Token> = tokenize::Tokenizer::new(&source).tokenize()?;
 
     println!("tokens = {:?}\n", tokens);
     Ok(())
