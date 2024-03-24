@@ -50,5 +50,15 @@ mod tests {
                 Err(e) => assert!(false, "Unexpected Err({:?})", e),
             }
         }
+
+        // paragraph
+        {
+            let source =
+                "<!DOCTYPE html><html><head></head><body><p>para1</p><p>para2</p></body></html>";
+            match convert(source) {
+                Ok(result) => assert_eq!(result, "para1\n\npara2\n\n"),
+                Err(e) => assert!(false, "Unexpected Err({:?})", e),
+            }
+        }
     }
 }

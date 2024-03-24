@@ -335,7 +335,8 @@ fn render_ol_element(element: &parse::Element) -> Result<String> {
 }
 
 fn render_p_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    let content = render_children(element)?;
+    wrap(&content, "", "\n\n")
 }
 
 fn render_pre_element(element: &parse::Element) -> Result<String> {
