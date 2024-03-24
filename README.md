@@ -1,6 +1,6 @@
 # html2md
 
-This is a HTML to Markdown converter.
+This is an HTML-to-Markdown converter.
 
 ## Usage
 
