@@ -141,12 +141,12 @@ fn render_unsupported_element(element: &parse::Element) -> Result<String> {
     render_nothing(element)
 }
 
-fn wrap(content: &str, prefix: &str, suffix: &str) -> String {
+fn wrap(content: &str, prefix: &str, suffix: &str) -> Result<String> {
     let mut result = String::new();
     result.push_str(prefix);
     result.push_str(&content);
     result.push_str(suffix);
-    result
+    Ok(result)
 }
 
 fn render_a_element(element: &parse::Element) -> Result<String> {
@@ -251,32 +251,32 @@ fn render_em_element(element: &parse::Element) -> Result<String> {
 
 fn render_h1_element(element: &parse::Element) -> Result<String> {
     let content = render_children(element)?;
-    Ok(wrap(&content, "# ", "\n"))
+    wrap(&content, "# ", "\n")
 }
 
 fn render_h2_element(element: &parse::Element) -> Result<String> {
     let content = render_children(element)?;
-    Ok(wrap(&content, "## ", "\n"))
+    wrap(&content, "## ", "\n")
 }
 
 fn render_h3_element(element: &parse::Element) -> Result<String> {
     let content = render_children(element)?;
-    Ok(wrap(&content, "### ", "\n"))
+    wrap(&content, "### ", "\n")
 }
 
 fn render_h4_element(element: &parse::Element) -> Result<String> {
     let content = render_children(element)?;
-    Ok(wrap(&content, "#### ", "\n"))
+    wrap(&content, "#### ", "\n")
 }
 
 fn render_h5_element(element: &parse::Element) -> Result<String> {
     let content = render_children(element)?;
-    Ok(wrap(&content, "##### ", "\n"))
+    wrap(&content, "##### ", "\n")
 }
 
 fn render_h6_element(element: &parse::Element) -> Result<String> {
     let content = render_children(element)?;
-    Ok(wrap(&content, "###### ", "\n"))
+    wrap(&content, "###### ", "\n")
 }
 
 fn render_hr_element(element: &parse::Element) -> Result<String> {
