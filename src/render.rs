@@ -5,13 +5,13 @@ pub type Result<T> = std::result::Result<T, RenderError>;
 
 #[derive(Debug, PartialEq)]
 pub enum RenderError {
-    // UnexpectedElement,
+    // UnexpectedNode,
 }
 
 impl fmt::Display for RenderError {
     fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            // RenderError::UnexpectedElement => write!(f, "unexpected element"),
+            // RenderError::UnexpectedNode => write!(f, "unexpected node"),
         }
     }
 }
@@ -52,11 +52,8 @@ fn render_element(element: &parse::Element) -> Result<String> {
         "blockquote" => render_blockquote_element(element),
         "body" => render_body_element(element),
         "br" => render_br_element(element),
-        "caption" => render_caption_element(element),
         "cite" => render_cite_element(element),
         "code" => render_code_element(element),
-        "col" => render_col_element(element),
-        "colgroup" => render_colgroup_element(element),
         "data" => render_data_element(element),
         "dd" => render_dd_element(element),
         "del" => render_del_element(element),
@@ -99,18 +96,18 @@ fn render_element(element: &parse::Element) -> Result<String> {
         "sub" => render_sub_element(element),
         "summary" => render_summary_element(element),
         "sup" => render_sup_element(element),
-        "table" => render_table_element(element),
-        "tbody" => render_tbody_element(element),
-        "td" => render_td_element(element),
-        "tfoot" => render_tfoot_element(element),
-        "th" => render_th_element(element),
-        "thead" => render_thead_element(element),
         "time" => render_time_element(element),
-        "tr" => render_tr_element(element),
         "u" => render_u_element(element),
         "ul" => render_ul_element(element),
         "var" => render_var_element(element),
         "wbr" => render_wbr_element(element),
+
+        // for table, render() dispatches only table, th, and tr elements and builds its structure.
+        "table" => render_table_element(element),
+        "th" | "td" => render_table_cell_for_tr_or_td_element(element),
+        "caption" | "colgroup" | "col" | "tbocy" | "tfoot" | "thead" | "tr" => {
+            render_nothing(element)
+        }
 
         // render nothing
         "area" | "audio" | "button" | "canvas" | "datalist" | "dialog" | "embed" | "fieldset"
@@ -208,10 +205,6 @@ fn render_br_element(_: &parse::Element) -> Result<String> {
     Ok(String::from("\n"))
 }
 
-fn render_caption_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
-}
-
 fn render_cite_element(element: &parse::Element) -> Result<String> {
     render_children(element)
 }
@@ -219,14 +212,6 @@ fn render_cite_element(element: &parse::Element) -> Result<String> {
 fn render_code_element(element: &parse::Element) -> Result<String> {
     let content = render_children(element)?;
     wrap(&content, "`", "`")
-}
-
-fn render_col_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
-}
-
-fn render_colgroup_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
 }
 
 fn render_data_element(element: &parse::Element) -> Result<String> {
@@ -414,35 +399,82 @@ fn render_sup_element(element: &parse::Element) -> Result<String> {
     render_children(element)
 }
 
+fn collect_tr_elements_in_children<'a>(
+    element: &'a parse::Element,
+) -> Result<Vec<&'a parse::Element<'a>>> {
+    let mut result = Vec::new();
+
+    for child_node in &element.children {
+        match child_node {
+            parse::Node::Element(child_element) => {
+                if child_element.tag == "tr" {
+                    result.push(child_element);
+                } else {
+                    let mut descendants = collect_tr_elements_in_children(&child_element)?;
+                    result.append(&mut descendants);
+                }
+            }
+            _ => continue,
+        }
+    }
+
+    Ok(result)
+}
+
 fn render_table_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    let tr_elements = collect_tr_elements_in_children(element)?;
+    let head_tr_element = tr_elements[0];
+    let body_tr_elements: Vec<&parse::Element> = tr_elements.into_iter().skip(1).collect();
+
+    let mut result = String::new();
+
+    let head = render_table_row_for_tr_element(head_tr_element)?;
+    result.push_str(&head);
+
+    let separator = render_table_separator_for_head_tr_element(head_tr_element)?;
+    result.push_str(&separator);
+
+    for body_tr_element in body_tr_elements {
+        let content = render_table_row_for_tr_element(body_tr_element)?;
+        result.push_str(&content);
+    }
+
+    result.push_str("\n");
+    Ok(result)
 }
 
-fn render_tbody_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+fn render_table_separator_for_head_tr_element(element: &parse::Element) -> Result<String> {
+    let mut result = String::new();
+
+    for _ in &element.children {
+        result.push_str("|---")
+    }
+    result.push_str("|\n");
+
+    Ok(result)
 }
 
-fn render_td_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+fn render_table_row_for_tr_element(element: &parse::Element) -> Result<String> {
+    let mut result = String::new();
+
+    for child_node in &element.children {
+        result.push_str("| ");
+
+        let content = render_node(child_node)?;
+        result.push_str(&content);
+
+        result.push_str(" ");
+    }
+    result.push_str("|\n");
+
+    Ok(result)
 }
 
-fn render_tfoot_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
-}
-
-fn render_th_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
-}
-
-fn render_thead_element(element: &parse::Element) -> Result<String> {
+fn render_table_cell_for_tr_or_td_element(element: &parse::Element) -> Result<String> {
     render_children(element)
 }
 
 fn render_time_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
-}
-
-fn render_tr_element(element: &parse::Element) -> Result<String> {
     render_children(element)
 }
 

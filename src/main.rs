@@ -146,5 +146,29 @@ mod tests {
                 Err(e) => assert!(false, "Unexpected Err({:?})", e),
             }
         }
+
+        // table
+        {
+            let source =
+                "<!DOCTYPE html><html><head></head><body><table><tr><th>1,1</th><th>1,2</th></tr><tr><td>2,1</td><td>2,2</td></tr><tr><td>3,1</td><td>3,2</td></tr></table></body></html>";
+            match convert(source) {
+                Ok(result) => assert_eq!(
+                    result,
+                    "| 1,1 | 1,2 |\n|---|---|\n| 2,1 | 2,2 |\n| 3,1 | 3,2 |\n\n"
+                ),
+                Err(e) => assert!(false, "Unexpected Err({:?})", e),
+            }
+        }
+        {
+            let source =
+                "<!DOCTYPE html><html><head></head><body><table><thead><tr><th>1,1</th><th>1,2</th></tr></thead><tbody><tr><td>2,1</td><td>2,2</td></tr><tr><td>3,1</td><td>3,2</td></tr></tbody></table></body></html>";
+            match convert(source) {
+                Ok(result) => assert_eq!(
+                    result,
+                    "| 1,1 | 1,2 |\n|---|---|\n| 2,1 | 2,2 |\n| 3,1 | 3,2 |\n\n"
+                ),
+                Err(e) => assert!(false, "Unexpected Err({:?})", e),
+            }
+        }
     }
 }
