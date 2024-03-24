@@ -256,7 +256,8 @@ fn render_dt_element(element: &parse::Element) -> Result<String> {
 }
 
 fn render_em_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    let content = render_children(element)?;
+    wrap(&content, "_", "_")
 }
 
 fn render_h1_element(element: &parse::Element) -> Result<String> {
