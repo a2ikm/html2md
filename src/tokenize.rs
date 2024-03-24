@@ -74,6 +74,8 @@ impl<'a> Tokenizer<'a> {
         tokens.push(doctype);
 
         loop {
+            self.skip_whitespaces();
+
             match self.tag_or_text() {
                 Ok(token) => tokens.push(token),
                 Err(TokenizeError::EOF) => break,
@@ -82,6 +84,15 @@ impl<'a> Tokenizer<'a> {
         }
 
         Ok(tokens)
+    }
+
+    fn skip_whitespaces(&mut self) -> () {
+        loop {
+            match self.chars.next_if(|c| c.is_ascii_whitespace()) {
+                Some(_) => continue,
+                None => break,
+            }
+        }
     }
 
     fn next(&mut self) -> Option<char> {
@@ -240,6 +251,22 @@ mod tests {
                         Token::Tag(Tag {
                             name: String::from("html"),
                             kind: TagKind::Close,
+                        }),
+                    ]
+                ),
+                Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
+            }
+        }
+        {
+            let mut t = Tokenizer::new("<!DOCTYPE html>\n<html>");
+            match t.tokenize() {
+                Ok(tokens) => assert_eq!(
+                    tokens,
+                    vec![
+                        Token::Doctype,
+                        Token::Tag(Tag {
+                            name: String::from("html"),
+                            kind: TagKind::Open,
                         }),
                     ]
                 ),
