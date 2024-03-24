@@ -25,6 +25,10 @@ impl std::error::Error for RenderError {
 }
 
 pub fn render(node: &parse::Node) -> Result<String> {
+    render_node(node)
+}
+
+pub fn render_node(node: &parse::Node) -> Result<String> {
     match node {
         parse::Node::Element(element) => render_element(element),
         parse::Node::Text(content) => render_text(content),
@@ -122,7 +126,7 @@ fn render_children(element: &parse::Element) -> Result<String> {
     let mut result = String::new();
 
     for node in &element.children {
-        let content = render(&node)?;
+        let content = render_node(&node)?;
         result.push_str(&content);
     }
 
