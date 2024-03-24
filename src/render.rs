@@ -250,27 +250,33 @@ fn render_em_element(element: &parse::Element) -> Result<String> {
 }
 
 fn render_h1_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    let content = render_children(element)?;
+    Ok(wrap(&content, "# ", "\n"))
 }
 
 fn render_h2_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    let content = render_children(element)?;
+    Ok(wrap(&content, "## ", "\n"))
 }
 
 fn render_h3_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    let content = render_children(element)?;
+    Ok(wrap(&content, "### ", "\n"))
 }
 
 fn render_h4_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    let content = render_children(element)?;
+    Ok(wrap(&content, "#### ", "\n"))
 }
 
 fn render_h5_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    let content = render_children(element)?;
+    Ok(wrap(&content, "##### ", "\n"))
 }
 
 fn render_h6_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    let content = render_children(element)?;
+    Ok(wrap(&content, "###### ", "\n"))
 }
 
 fn render_hr_element(element: &parse::Element) -> Result<String> {
