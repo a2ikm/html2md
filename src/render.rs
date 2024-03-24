@@ -25,7 +25,11 @@ impl std::error::Error for RenderError {
 }
 
 pub fn render(node: &parse::Node) -> Result<String> {
-    render_node(node)
+    let mut result = render_node(node)?;
+    if !result.ends_with("\n") {
+        result.push_str("\n");
+    }
+    Ok(result)
 }
 
 pub fn render_node(node: &parse::Node) -> Result<String> {

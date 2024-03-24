@@ -34,7 +34,7 @@ mod tests {
         {
             let source = "<!DOCTYPE html><html><head></head><body>Hello!</body></html>";
             match convert(source) {
-                Ok(result) => assert_eq!(result, "Hello!"),
+                Ok(result) => assert_eq!(result, "Hello!\n"),
                 Err(e) => assert!(false, "Expected Ok(\"Hello!\") but got Err({:?})", e),
             }
         }
@@ -43,7 +43,7 @@ mod tests {
         {
             let source = "<!DOCTYPE html><html><head></head><body>hello<br/>world</body></html>";
             match convert(source) {
-                Ok(result) => assert_eq!(result, "hello\nworld"),
+                Ok(result) => assert_eq!(result, "hello\nworld\n"),
                 Err(e) => assert!(false, "Unexpected Err({:?})", e),
             }
         }
@@ -85,7 +85,7 @@ mod tests {
             let source =
                 "<!DOCTYPE html><html><head></head><body><ruby>hello<rt>world</rt></ruby></body></html>";
             match convert(source) {
-                Ok(result) => assert_eq!(result, "hello"),
+                Ok(result) => assert_eq!(result, "hello\n"),
                 Err(e) => assert!(false, "Unexpected Err({:?})", e),
             }
         }
@@ -93,7 +93,7 @@ mod tests {
             let source =
                 "<!DOCTYPE html><html><head></head><body><ruby>hello<rp>(</rp><rt>world</rt><rp>)</rp></ruby></body></html>";
             match convert(source) {
-                Ok(result) => assert_eq!(result, "hello"),
+                Ok(result) => assert_eq!(result, "hello\n"),
                 Err(e) => assert!(false, "Unexpected Err({:?})", e),
             }
         }
