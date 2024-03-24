@@ -58,6 +58,16 @@ mod tests {
             }
         }
 
+        // del
+        {
+            let source =
+                "<!DOCTYPE html><html><head></head><body>This is <del>hello</del>.</body></html>";
+            match convert(source) {
+                Ok(result) => assert_eq!(result, "This is ~hello~.\n"),
+                Err(e) => assert!(false, "Unexpected Err({:?})", e),
+            }
+        }
+
         // heading
         {
             let source = "<!DOCTYPE html><html><head></head><body><h1>H1</h1><h2>H2</h2><h3>H3</h3><h4>H4</h4><h5>H5</h5><h6>H6</h6></body></html>";

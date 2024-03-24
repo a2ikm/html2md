@@ -231,7 +231,8 @@ fn render_dd_element(element: &parse::Element) -> Result<String> {
 }
 
 fn render_del_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    let content = render_children(element)?;
+    wrap(&content, "~", "~")
 }
 
 fn render_details_element(element: &parse::Element) -> Result<String> {
