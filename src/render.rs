@@ -189,8 +189,8 @@ fn render_body_element(element: &parse::Element) -> Result<String> {
     render_children(element)
 }
 
-fn render_br_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+fn render_br_element(_: &parse::Element) -> Result<String> {
+    Ok(String::from("\n"))
 }
 
 fn render_caption_element(element: &parse::Element) -> Result<String> {
