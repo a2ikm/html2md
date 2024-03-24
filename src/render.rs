@@ -210,7 +210,8 @@ fn render_cite_element(element: &parse::Element) -> Result<String> {
 }
 
 fn render_code_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    let content = render_children(element)?;
+    wrap(&content, "`", "`")
 }
 
 fn render_col_element(element: &parse::Element) -> Result<String> {
