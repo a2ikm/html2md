@@ -60,5 +60,23 @@ mod tests {
                 Err(e) => assert!(false, "Unexpected Err({:?})", e),
             }
         }
+
+        // ruby
+        {
+            let source =
+                "<!DOCTYPE html><html><head></head><body><ruby>hello<rt>world</rt></ruby></body></html>";
+            match convert(source) {
+                Ok(result) => assert_eq!(result, "hello"),
+                Err(e) => assert!(false, "Unexpected Err({:?})", e),
+            }
+        }
+        {
+            let source =
+                "<!DOCTYPE html><html><head></head><body><ruby>hello<rp>(</rp><rt>world</rt><rp>)</rp></ruby></body></html>";
+            match convert(source) {
+                Ok(result) => assert_eq!(result, "hello"),
+                Err(e) => assert!(false, "Unexpected Err({:?})", e),
+            }
+        }
     }
 }

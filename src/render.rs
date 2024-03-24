@@ -348,11 +348,11 @@ fn render_q_element(element: &parse::Element) -> Result<String> {
 }
 
 fn render_rp_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    render_nothing(element)
 }
 
 fn render_rt_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    render_nothing(element)
 }
 
 fn render_ruby_element(element: &parse::Element) -> Result<String> {
