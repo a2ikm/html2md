@@ -136,5 +136,15 @@ mod tests {
                 Err(e) => assert!(false, "Unexpected Err({:?})", e),
             }
         }
+
+        // strong
+        {
+            let source =
+                "<!DOCTYPE html><html><head></head><body>This is <strong>strong</strong>.</body></html>";
+            match convert(source) {
+                Ok(result) => assert_eq!(result, "This is **strong**.\n"),
+                Err(e) => assert!(false, "Unexpected Err({:?})", e),
+            }
+        }
     }
 }

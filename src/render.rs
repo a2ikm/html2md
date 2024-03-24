@@ -398,7 +398,8 @@ fn render_span_element(element: &parse::Element) -> Result<String> {
 }
 
 fn render_strong_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    let content = render_children(element)?;
+    wrap(&content, "**", "**")
 }
 
 fn render_sub_element(element: &parse::Element) -> Result<String> {
