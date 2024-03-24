@@ -279,8 +279,8 @@ fn render_h6_element(element: &parse::Element) -> Result<String> {
     wrap(&content, "###### ", "\n")
 }
 
-fn render_hr_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+fn render_hr_element(_: &parse::Element) -> Result<String> {
+    Ok(String::from("\n\n---\n\n"))
 }
 
 fn render_html_element(element: &parse::Element) -> Result<String> {

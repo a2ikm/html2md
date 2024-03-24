@@ -51,6 +51,16 @@ mod tests {
             }
         }
 
+        // horizontal line
+        {
+            let source =
+                "<!DOCTYPE html><html><head></head><body><p>para1</p><hr/><p>para2</p></body></html>";
+            match convert(source) {
+                Ok(result) => assert_eq!(result, "para1\n\n\n\n---\n\npara2\n\n"),
+                Err(e) => assert!(false, "Unexpected Err({:?})", e),
+            }
+        }
+
         // paragraph
         {
             let source =
