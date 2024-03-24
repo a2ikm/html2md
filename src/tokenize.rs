@@ -95,14 +95,6 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn next(&mut self) -> Option<char> {
-        self.chars.next()
-    }
-
-    fn peek(&mut self) -> Option<&char> {
-        self.chars.peek()
-    }
-
     fn consume_char(&mut self, expected: char) -> bool {
         match self.chars.next_if(|c| *c == expected) {
             Some(_) => true,
@@ -111,10 +103,10 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn expect_char(&mut self, expected: char) -> Result<()> {
-        match self.peek() {
+        match self.chars.peek() {
             Some(actual) => {
                 if *actual == expected {
-                    self.next();
+                    self.chars.next();
                     Ok(())
                 } else {
                     Err(TokenizeError::UnexpectedChar(expected, *actual))
