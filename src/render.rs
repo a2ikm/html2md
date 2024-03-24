@@ -118,7 +118,7 @@ fn render_element(element: &parse::Element) -> Result<String> {
     }
 }
 
-fn render_plain_element(element: &parse::Element) -> Result<String> {
+fn render_children(element: &parse::Element) -> Result<String> {
     let mut result = String::new();
 
     for node in &element.children {
@@ -141,132 +141,140 @@ fn render_unsupported_element(element: &parse::Element) -> Result<String> {
     render_nothing(element)
 }
 
+fn wrap(content: &str, prefix: &str, suffix: &str) -> String {
+    let mut result = String::new();
+    result.push_str(prefix);
+    result.push_str(&content);
+    result.push_str(suffix);
+    result
+}
+
 fn render_a_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_abbr_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_address_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_article_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_aside_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_b_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_bdi_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_bdo_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_blockquote_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_body_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_br_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_caption_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_cite_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_code_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_col_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_colgroup_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_data_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_dd_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_del_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_details_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_dfn_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_div_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_dl_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_dt_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_em_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_h1_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_h2_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_h3_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_h4_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_h5_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_h6_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_hr_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_html_element(element: &parse::Element) -> Result<String> {
@@ -281,151 +289,151 @@ fn render_html_element(element: &parse::Element) -> Result<String> {
 }
 
 fn render_i_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_img_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_ins_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_kbd_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_li_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_main_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_mark_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_menu_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_nav_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_ol_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_p_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_pre_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_q_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_rp_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_rt_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_ruby_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_s_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_samp_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_section_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_small_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_span_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_strong_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_sub_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_summary_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_sup_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_table_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_tbody_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_td_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_tfoot_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_th_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_thead_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_time_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_tr_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_u_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_ul_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_var_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_wbr_element(element: &parse::Element) -> Result<String> {
-    render_plain_element(element)
+    render_children(element)
 }
 
 fn render_text(content: &str) -> Result<String> {
