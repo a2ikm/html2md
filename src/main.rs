@@ -39,6 +39,15 @@ mod tests {
             }
         }
 
+        // blockquote
+        {
+            let source = "<!DOCTYPE html><html><head></head><body><blockquote>hello<br/>world</blockquote></body></html>";
+            match convert(source) {
+                Ok(result) => assert_eq!(result, "> hello\n> world\n"),
+                Err(e) => assert!(false, "Unexpected Err({:?})", e),
+            }
+        }
+
         // break
         {
             let source = "<!DOCTYPE html><html><head></head><body>hello<br/>world</body></html>";

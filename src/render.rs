@@ -190,7 +190,14 @@ fn render_bdo_element(element: &parse::Element) -> Result<String> {
 }
 
 fn render_blockquote_element(element: &parse::Element) -> Result<String> {
-    render_children(element)
+    let mut result = String::new();
+    let content = render_children(element)?;
+    for line in content.lines() {
+        result.push_str("> ");
+        result.push_str(line);
+        result.push_str("\n");
+    }
+    Ok(result)
 }
 
 fn render_body_element(element: &parse::Element) -> Result<String> {
