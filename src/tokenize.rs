@@ -160,9 +160,17 @@ impl<'a> Tokenizer<'a> {
     fn read_tag_name(&mut self) -> Result<String> {
         let mut tag = String::new();
         loop {
-            match self.chars.next_if(|c| c.is_alphanumeric()) {
-                Some(c) => tag.push(c),
-                None => break,
+            match self.chars.peek() {
+                Some(c) => {
+                    if c.is_alphanumeric() {
+                        tag.push(*c);
+                        self.chars.next();
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                None => return Err(TokenizeError::UnexpectedEOF),
             }
         }
 
@@ -334,7 +342,7 @@ mod tests {
         let mut t = Tokenizer::new("<");
         match t.tokenize() {
             Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
-            Err(e) => assert_eq!(e, TokenizeError::NoTag),
+            Err(e) => assert_eq!(e, TokenizeError::UnexpectedEOF),
         }
     }
 
