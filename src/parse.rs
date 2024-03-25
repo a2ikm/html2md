@@ -128,6 +128,7 @@ fn element_or_text_nodes<'a>(
                 let node = expect_text(tokens)?;
                 nodes.push(node);
             }
+            Some(_) => return Err(ParseError::UnexpectedToken),
             None => return Err(ParseError::UnexpectedEOF),
         }
     }

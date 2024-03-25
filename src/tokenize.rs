@@ -38,6 +38,7 @@ impl std::error::Error for TokenizeError {
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
+    SGML,
     Tag(Tag),
     Text(String),
 }
@@ -69,8 +70,6 @@ impl<'a> Tokenizer<'a> {
     pub fn tokenize(&mut self) -> Result<Vec<Token>> {
         let mut tokens = Vec::new();
 
-        self.read_doctype()?;
-
         loop {
             self.skip_whitespaces();
 
@@ -79,6 +78,7 @@ impl<'a> Tokenizer<'a> {
             }
 
             match self.read_token() {
+                Ok(Token::SGML) => continue,
                 Ok(token) => tokens.push(token),
                 Err(e) => return Err(e),
             }
@@ -100,19 +100,35 @@ impl<'a> Tokenizer<'a> {
         self.chars.peek().is_none()
     }
 
-    fn read_doctype(&mut self) -> Result<()> {
-        for c in "<!DOCTYPE html>".chars() {
-            self.expect_char(c)?;
-        }
-        Ok(())
-    }
-
     fn read_token(&mut self) -> Result<Token> {
         if self.consume_char('<') {
-            self.read_tag()
+            if self.consume_char('!') {
+                self.read_sgml()
+            } else {
+                self.read_tag()
+            }
         } else {
             self.read_text()
         }
+    }
+
+    fn read_sgml(&mut self) -> Result<Token> {
+        loop {
+            match self.chars.peek() {
+                Some(c) => {
+                    if *c == '>' {
+                        self.chars.next();
+                        break;
+                    } else {
+                        self.chars.next();
+                        continue;
+                    }
+                }
+                None => return Err(TokenizeError::UnexpectedEOF),
+            }
+        }
+
+        Ok(Token::SGML)
     }
 
     fn read_tag(&mut self) -> Result<Token> {
@@ -192,14 +208,16 @@ impl<'a> Tokenizer<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use super::*;
 
     #[test]
     fn test_tokenizer_tokenize_empty() {
         let mut t = Tokenizer::new("");
         match t.tokenize() {
-            Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
-            Err(e) => assert_eq!(e, TokenizeError::UnexpectedEOF),
+            Ok(tokens) => assert_eq!(tokens, vec![]),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
         }
     }
 
@@ -253,7 +271,7 @@ mod tests {
 
     #[test]
     fn test_tokenizer_tokenize_open_and_close_tag() {
-        let mut t = Tokenizer::new("<!DOCTYPE html><html></html>");
+        let mut t = Tokenizer::new("<html></html>");
         match t.tokenize() {
             Ok(tokens) => assert_eq!(
                 tokens,
@@ -274,7 +292,7 @@ mod tests {
 
     #[test]
     fn test_tokenizer_tokenize_void_tag() {
-        let mut t = Tokenizer::new("<!DOCTYPE html><hr/>");
+        let mut t = Tokenizer::new("<hr/>");
         match t.tokenize() {
             Ok(tokens) => assert_eq!(
                 tokens,
@@ -289,7 +307,7 @@ mod tests {
 
     #[test]
     fn test_tokenizer_tokenize_uppercase_element() {
-        let mut t = Tokenizer::new("<!DOCTYPE html><HTML>");
+        let mut t = Tokenizer::new("<HTML>");
         match t.tokenize() {
             Ok(tokens) => assert_eq!(
                 tokens,
@@ -304,7 +322,7 @@ mod tests {
 
     #[test]
     fn test_tokenizer_tokenize_closed_void_tag() {
-        let mut t = Tokenizer::new("<!DOCTYPE html></foobar/>");
+        let mut t = Tokenizer::new("</foobar/>");
         match t.tokenize() {
             Ok(tokens) => assert!(false, "Expected Err(Malformed) but got Ok({:?})", tokens),
             Err(e) => assert_eq!(e, TokenizeError::Malformed),
@@ -313,7 +331,7 @@ mod tests {
 
     #[test]
     fn test_tokenizer_tokenize_only_opening_bracket() {
-        let mut t = Tokenizer::new("<!DOCTYPE html><");
+        let mut t = Tokenizer::new("<");
         match t.tokenize() {
             Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
             Err(e) => assert_eq!(e, TokenizeError::NoTag),
@@ -322,7 +340,7 @@ mod tests {
 
     // #[test]
     // fn test_tokenizer_tokenize_only_closing_bracket() {
-    //     let mut t = Tokenizer::new("<!DOCTYPE html>>");
+    //     let mut t = Tokenizer::new(">");
     //     match t.tokenize() {
     //         Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
     //         Err(e) => assert_eq!(e, TokenizeError::UnexpectedChar('<', '>')),
@@ -331,7 +349,7 @@ mod tests {
 
     #[test]
     fn test_tokenizer_tokenize_missing_tag_name() {
-        let mut t = Tokenizer::new("<!DOCTYPE html><>");
+        let mut t = Tokenizer::new("<>");
         match t.tokenize() {
             Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
             Err(e) => assert_eq!(e, TokenizeError::NoTag),
@@ -340,7 +358,7 @@ mod tests {
 
     // #[test]
     // fn test_tokenizer_tokenize_missing_opening_bracket() {
-    //     let mut t = Tokenizer::new("<!DOCTYPE html>a>");
+    //     let mut t = Tokenizer::new("a>");
     //     match t.tokenize() {
     //         Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
     //         Err(e) => assert_eq!(e, TokenizeError::UnexpectedClosingBracket),
@@ -349,7 +367,7 @@ mod tests {
 
     #[test]
     fn test_tokenizer_tokenize_missing_closing_bracket() {
-        let mut t = Tokenizer::new("<!DOCTYPE html><a");
+        let mut t = Tokenizer::new("<a");
         match t.tokenize() {
             Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
             Err(e) => assert_eq!(e, TokenizeError::UnexpectedEOF),
@@ -358,7 +376,7 @@ mod tests {
 
     #[test]
     fn test_tokenizer_tokenize_text() {
-        let mut t = Tokenizer::new("<!DOCTYPE html>abcde");
+        let mut t = Tokenizer::new("abcde");
         match t.tokenize() {
             Ok(tokens) => assert_eq!(tokens, vec![Token::Text("abcde".to_string()),]),
             Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
