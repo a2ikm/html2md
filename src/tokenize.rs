@@ -110,13 +110,12 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn expect_char(&mut self, expected: char) -> Result<()> {
-        match self.chars.peek() {
+        match self.chars.next() {
             Some(actual) => {
-                if *actual == expected {
-                    self.chars.next();
+                if actual == expected {
                     Ok(())
                 } else {
-                    Err(TokenizeError::UnexpectedChar(expected, *actual))
+                    Err(TokenizeError::UnexpectedChar(expected, actual))
                 }
             }
             None => Err(TokenizeError::UnexpectedEOF),
