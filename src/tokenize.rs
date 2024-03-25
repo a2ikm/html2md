@@ -70,7 +70,7 @@ impl<'a> Tokenizer<'a> {
     pub fn tokenize(&mut self) -> Result<Vec<Token>> {
         let mut tokens = Vec::new();
 
-        let doctype = self.doctype()?;
+        let doctype = self.read_doctype()?;
         tokens.push(doctype);
 
         loop {
@@ -80,7 +80,7 @@ impl<'a> Tokenizer<'a> {
                 break;
             }
 
-            match self.tag_or_text() {
+            match self.read_token() {
                 Ok(token) => tokens.push(token),
                 Err(e) => return Err(e),
             }
@@ -100,6 +100,76 @@ impl<'a> Tokenizer<'a> {
 
     fn is_eof(&mut self) -> bool {
         self.chars.peek().is_none()
+    }
+
+    fn read_doctype(&mut self) -> Result<Token> {
+        for c in "<!DOCTYPE html>".chars() {
+            self.expect_char(c)?;
+        }
+        Ok(Token::Doctype)
+    }
+
+    fn read_token(&mut self) -> Result<Token> {
+        match self.peek_char('<') {
+            Ok(true) => self.read_tag(),
+            Ok(false) => self.read_text(),
+            Err(e) => Err(e),
+        }
+    }
+
+    fn read_tag(&mut self) -> Result<Token> {
+        _ = self.expect_char('<')?;
+        let beginning_with_slash = self.consume_char('/');
+        let name = self.read_tag_name()?;
+        let ending_with_slash = self.consume_char('/');
+        _ = self.expect_char('>')?;
+
+        if beginning_with_slash && ending_with_slash {
+            Err(TokenizeError::Malformed)
+        } else if beginning_with_slash {
+            Ok(Token::Tag(Tag {
+                name,
+                kind: TagKind::Close,
+            }))
+        } else if ending_with_slash {
+            Ok(Token::Tag(Tag {
+                name,
+                kind: TagKind::Void,
+            }))
+        } else {
+            Ok(Token::Tag(Tag {
+                name,
+                kind: TagKind::Open,
+            }))
+        }
+    }
+
+    fn read_tag_name(&mut self) -> Result<String> {
+        let mut tag = String::new();
+        loop {
+            match self.chars.next_if(|c| c.is_alphanumeric()) {
+                Some(c) => tag.push(c),
+                None => break,
+            }
+        }
+
+        if tag.len() > 0 {
+            Ok(tag.to_ascii_lowercase())
+        } else {
+            Err(TokenizeError::NoTag)
+        }
+    }
+
+    fn read_text(&mut self) -> Result<Token> {
+        let mut content = String::new();
+        loop {
+            match self.chars.next_if(|c| *c != '<') {
+                Some(c) => content.push(c),
+                None => break,
+            }
+        }
+
+        Ok(Token::Text(content))
     }
 
     fn consume_char(&mut self, expected: char) -> bool {
@@ -126,76 +196,6 @@ impl<'a> Tokenizer<'a> {
         match self.chars.peek() {
             Some(actual) => Ok(*actual == expected),
             None => Err(TokenizeError::UnexpectedEOF),
-        }
-    }
-
-    fn doctype(&mut self) -> Result<Token> {
-        for c in "<!DOCTYPE html>".chars() {
-            self.expect_char(c)?;
-        }
-        Ok(Token::Doctype)
-    }
-
-    fn tag_name(&mut self) -> Result<String> {
-        let mut tag = String::new();
-        loop {
-            match self.chars.next_if(|c| c.is_alphanumeric()) {
-                Some(c) => tag.push(c),
-                None => break,
-            }
-        }
-
-        if tag.len() > 0 {
-            Ok(tag.to_ascii_lowercase())
-        } else {
-            Err(TokenizeError::NoTag)
-        }
-    }
-
-    fn tag(&mut self) -> Result<Token> {
-        _ = self.expect_char('<')?;
-        let beginning_with_slash = self.consume_char('/');
-        let name = self.tag_name()?;
-        let ending_with_slash = self.consume_char('/');
-        _ = self.expect_char('>')?;
-
-        if beginning_with_slash && ending_with_slash {
-            Err(TokenizeError::Malformed)
-        } else if beginning_with_slash {
-            Ok(Token::Tag(Tag {
-                name,
-                kind: TagKind::Close,
-            }))
-        } else if ending_with_slash {
-            Ok(Token::Tag(Tag {
-                name,
-                kind: TagKind::Void,
-            }))
-        } else {
-            Ok(Token::Tag(Tag {
-                name,
-                kind: TagKind::Open,
-            }))
-        }
-    }
-
-    fn text(&mut self) -> Result<Token> {
-        let mut content = String::new();
-        loop {
-            match self.chars.next_if(|c| *c != '<') {
-                Some(c) => content.push(c),
-                None => break,
-            }
-        }
-
-        Ok(Token::Text(content))
-    }
-
-    fn tag_or_text(&mut self) -> Result<Token> {
-        match self.peek_char('<') {
-            Ok(true) => self.tag(),
-            Ok(false) => self.text(),
-            Err(e) => Err(e),
         }
     }
 }
