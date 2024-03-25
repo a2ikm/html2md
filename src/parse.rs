@@ -98,7 +98,7 @@ fn expect_element<'a>(tokens: &mut Peekable<Iter<'a, tokenize::Token>>) -> Resul
             tokenize::TagKind::Close => Err(ParseError::UnexpectedToken),
         },
         Some(_) => Err(ParseError::UnexpectedToken),
-        None => return Err(ParseError::UnexpectedEOF),
+        None => Err(ParseError::UnexpectedEOF),
     }
 }
 
@@ -106,7 +106,7 @@ fn expect_text<'a>(tokens: &mut Peekable<Iter<'a, tokenize::Token>>) -> Result<N
     match tokens.next() {
         Some(tokenize::Token::Text(content)) => Ok(Node::Text(content)),
         Some(_) => Err(ParseError::UnexpectedToken),
-        None => return Err(ParseError::UnexpectedEOF),
+        None => Err(ParseError::UnexpectedEOF),
     }
 }
 
