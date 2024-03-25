@@ -43,16 +43,7 @@ pub struct Element<'a> {
 
 pub fn parse<'a>(tokens: &'a Vec<tokenize::Token>) -> Result<Node<'a>> {
     let mut it = tokens.iter().peekable();
-    expect_doctype(&mut it)?;
     html(&mut it)
-}
-
-fn expect_doctype<'a>(tokens: &mut Peekable<Iter<'a, tokenize::Token>>) -> Result<()> {
-    match tokens.next() {
-        Some(tokenize::Token::Doctype) => Ok(()),
-        Some(_) => Err(ParseError::UnexpectedToken),
-        None => Err(ParseError::UnexpectedEOF),
-    }
 }
 
 fn expect_open_tag_with_name<'a>(
@@ -137,7 +128,6 @@ fn element_or_text_nodes<'a>(
                 let node = expect_text(tokens)?;
                 nodes.push(node);
             }
-            Some(_) => break,
             None => return Err(ParseError::UnexpectedEOF),
         }
     }
