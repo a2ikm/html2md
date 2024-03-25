@@ -6,21 +6,21 @@ pub type Result<T> = std::result::Result<T, TokenizeError>;
 
 #[derive(Debug, PartialEq)]
 pub enum TokenizeError {
-    EOF,
     Malformed,
     NoTag,
     UnexpectedChar(char, char), // (expected, actual)
+    UnexpectedEOF,
 }
 
 impl fmt::Display for TokenizeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            TokenizeError::EOF => write!(f, "reached EOF"),
             TokenizeError::Malformed => write!(f, "malformed"),
             TokenizeError::NoTag => write!(f, "no tag"),
             TokenizeError::UnexpectedChar(expected, actual) => {
                 write!(f, "expected {} but got {}", expected, actual)
             }
+            TokenizeError::UnexpectedEOF => write!(f, "unexpected EOF"),
         }
     }
 }
@@ -28,10 +28,10 @@ impl fmt::Display for TokenizeError {
 impl std::error::Error for TokenizeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
-            TokenizeError::EOF => None,
             TokenizeError::NoTag => None,
             TokenizeError::Malformed => None,
             TokenizeError::UnexpectedChar(..) => None,
+            TokenizeError::UnexpectedEOF => None,
         }
     }
 }
@@ -76,9 +76,12 @@ impl<'a> Tokenizer<'a> {
         loop {
             self.skip_whitespaces();
 
+            if self.is_eof() {
+                break;
+            }
+
             match self.tag_or_text() {
                 Ok(token) => tokens.push(token),
-                Err(TokenizeError::EOF) => break,
                 Err(e) => return Err(e),
             }
         }
@@ -93,6 +96,10 @@ impl<'a> Tokenizer<'a> {
                 None => break,
             }
         }
+    }
+
+    fn is_eof(&mut self) -> bool {
+        self.chars.peek().is_none()
     }
 
     fn consume_char(&mut self, expected: char) -> bool {
@@ -112,14 +119,14 @@ impl<'a> Tokenizer<'a> {
                     Err(TokenizeError::UnexpectedChar(expected, *actual))
                 }
             }
-            None => Err(TokenizeError::EOF),
+            None => Err(TokenizeError::UnexpectedEOF),
         }
     }
 
     fn peek_char(&mut self, expected: char) -> Result<bool> {
         match self.chars.peek() {
             Some(actual) => Ok(*actual == expected),
-            None => Err(TokenizeError::EOF),
+            None => Err(TokenizeError::UnexpectedEOF),
         }
     }
 
@@ -287,14 +294,14 @@ mod tests {
             let mut t = Tokenizer::new("");
             match t.doctype() {
                 Ok(token) => assert!(false, "Expected Err(EOF) but got Ok: token = {:?}", token),
-                Err(e) => assert_eq!(TokenizeError::EOF, e),
+                Err(e) => assert_eq!(TokenizeError::UnexpectedEOF, e),
             }
         }
         {
             let mut t = Tokenizer::new("<");
             match t.doctype() {
                 Ok(token) => assert!(false, "Expected Err(EOF) but got Ok: token = {:?}", token),
-                Err(e) => assert_eq!(TokenizeError::EOF, e),
+                Err(e) => assert_eq!(TokenizeError::UnexpectedEOF, e),
             }
         }
         {
@@ -384,7 +391,7 @@ mod tests {
                     "Expected Err(TokenizeError::NoTag), but got {:?}",
                     token
                 ),
-                Err(e) => assert_eq!(e, TokenizeError::EOF),
+                Err(e) => assert_eq!(e, TokenizeError::UnexpectedEOF),
             }
         }
     }
@@ -449,7 +456,7 @@ mod tests {
                     "Expected Err(TokenizerError::EOF) but got Ok({:?})",
                     token
                 ),
-                Err(e) => assert_eq!(e, TokenizeError::EOF),
+                Err(e) => assert_eq!(e, TokenizeError::UnexpectedEOF),
             }
         }
     }
