@@ -110,15 +110,14 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn read_token(&mut self) -> Result<Token> {
-        match self.peek_char('<') {
-            Ok(true) => self.read_tag(),
-            Ok(false) => self.read_text(),
-            Err(e) => Err(e),
+        if self.consume_char('<') {
+            self.read_tag()
+        } else {
+            self.read_text()
         }
     }
 
     fn read_tag(&mut self) -> Result<Token> {
-        _ = self.expect_char('<')?;
         let beginning_with_slash = self.consume_char('/');
         let name = self.read_tag_name()?;
         let ending_with_slash = self.consume_char('/');
@@ -188,13 +187,6 @@ impl<'a> Tokenizer<'a> {
                     Err(TokenizeError::UnexpectedChar(expected, actual))
                 }
             }
-            None => Err(TokenizeError::UnexpectedEOF),
-        }
-    }
-
-    fn peek_char(&mut self, expected: char) -> Result<bool> {
-        match self.chars.peek() {
-            Some(actual) => Ok(*actual == expected),
             None => Err(TokenizeError::UnexpectedEOF),
         }
     }
