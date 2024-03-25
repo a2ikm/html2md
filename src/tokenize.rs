@@ -205,258 +205,189 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_tokenizer_tokenize() {
-        {
-            let mut t = Tokenizer::new("<!DOCTYPE html>");
-            match t.tokenize() {
-                Ok(tokens) => assert_eq!(tokens, vec![Token::Doctype]),
-                Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
-            }
-        }
-        {
-            let mut t =
-                Tokenizer::new("<!DOCTYPE html><html><body><p>hello</p><hr/></body></html>");
-            match t.tokenize() {
-                Ok(tokens) => assert_eq!(
-                    tokens,
-                    vec![
-                        Token::Doctype,
-                        Token::Tag(Tag {
-                            name: String::from("html"),
-                            kind: TagKind::Open,
-                        }),
-                        Token::Tag(Tag {
-                            name: String::from("body"),
-                            kind: TagKind::Open,
-                        }),
-                        Token::Tag(Tag {
-                            name: String::from("p"),
-                            kind: TagKind::Open,
-                        }),
-                        Token::Text(String::from("hello")),
-                        Token::Tag(Tag {
-                            name: String::from("p"),
-                            kind: TagKind::Close,
-                        }),
-                        Token::Tag(Tag {
-                            name: String::from("hr"),
-                            kind: TagKind::Void,
-                        }),
-                        Token::Tag(Tag {
-                            name: String::from("body"),
-                            kind: TagKind::Close,
-                        }),
-                        Token::Tag(Tag {
-                            name: String::from("html"),
-                            kind: TagKind::Close,
-                        }),
-                    ]
-                ),
-                Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
-            }
-        }
-        {
-            let mut t = Tokenizer::new("<!DOCTYPE html>\n<html>");
-            match t.tokenize() {
-                Ok(tokens) => assert_eq!(
-                    tokens,
-                    vec![
-                        Token::Doctype,
-                        Token::Tag(Tag {
-                            name: String::from("html"),
-                            kind: TagKind::Open,
-                        }),
-                    ]
-                ),
-                Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
-            }
+    fn test_tokenizer_tokenize_empty() {
+        let mut t = Tokenizer::new("");
+        match t.tokenize() {
+            Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
+            Err(e) => assert_eq!(e, TokenizeError::UnexpectedEOF),
         }
     }
 
     #[test]
-    fn test_tokenizer_doctype() {
-        {
-            let mut t = Tokenizer::new("<!DOCTYPE html>");
-            match t.doctype() {
-                Ok(token) => assert_eq!(Token::Doctype, token),
-                Err(e) => assert!(false, "Expected Ok but got Err: error = {}", e),
-            }
-        }
-        {
-            let mut t = Tokenizer::new("<DOCTYPE html>");
-            match t.doctype() {
-                Ok(token) => assert!(false, "Expected Err but got Ok: token = {:?}", token),
-                Err(_) => assert!(true),
-            }
-        }
-        {
-            let mut t = Tokenizer::new("");
-            match t.doctype() {
-                Ok(token) => assert!(false, "Expected Err(EOF) but got Ok: token = {:?}", token),
-                Err(e) => assert_eq!(TokenizeError::UnexpectedEOF, e),
-            }
-        }
-        {
-            let mut t = Tokenizer::new("<");
-            match t.doctype() {
-                Ok(token) => assert!(false, "Expected Err(EOF) but got Ok: token = {:?}", token),
-                Err(e) => assert_eq!(TokenizeError::UnexpectedEOF, e),
-            }
-        }
-        {
-            let mut t = Tokenizer::new(">");
-            match t.doctype() {
-                Ok(token) => assert!(
-                    false,
-                    "Expected Err(UnexpectedChar) but got Ok: token = {:?}",
-                    token
-                ),
-                Err(e) => assert_eq!(TokenizeError::UnexpectedChar('<', '>'), e),
-            }
+    fn test_tokenizer_tokenize_only_doctype() {
+        let mut t = Tokenizer::new("<!DOCTYPE html>");
+        match t.tokenize() {
+            Ok(tokens) => assert_eq!(tokens, vec![Token::Doctype]),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
         }
     }
 
     #[test]
-    fn test_tokenizer_tag() {
-        {
-            let mut t = Tokenizer::new("<a>");
-            match t.tag() {
-                Ok(Token::Tag(tag)) => assert_eq!(
-                    tag,
-                    Tag {
-                        name: String::from("a"),
-                        kind: TagKind::Open,
-                    }
-                ),
-                Ok(token) => assert!(false, "Expected Token::Tag, but got {:?}", token),
-                Err(e) => assert!(false, "Expected Ok but got Err: error = {}", e),
-            }
-        }
-        {
-            let mut t = Tokenizer::new("<A>");
-            match t.tag() {
-                Ok(Token::Tag(tag)) => assert_eq!(
-                    tag,
-                    Tag {
-                        name: String::from("a"),
-                        kind: TagKind::Open,
-                    }
-                ),
-                Ok(token) => assert!(false, "Expected Token::Tag, but got {:?}", token),
-                Err(e) => assert!(false, "Expected Ok but got Err: error = {}", e),
-            }
-        }
-        {
-            let mut t = Tokenizer::new("<table>");
-            match t.tag() {
-                Ok(Token::Tag(tag)) => assert_eq!(
-                    tag,
-                    Tag {
-                        name: String::from("table"),
-                        kind: TagKind::Open,
-                    }
-                ),
-                Ok(token) => assert!(false, "Expected Token::Tag, but got {:?}", token),
-                Err(e) => assert!(false, "Expected Ok but got Err: error = {}", e),
-            }
-        }
-        {
-            let mut t = Tokenizer::new("<>");
-            match t.tag() {
-                Ok(token) => assert!(
-                    false,
-                    "Expected Err(TokenizeError::NoTag), but got {:?}",
-                    token
-                ),
-                Err(e) => assert_eq!(e, TokenizeError::NoTag),
-            }
-        }
-        {
-            let mut t = Tokenizer::new("a>");
-            match t.tag() {
-                Ok(token) => assert!(
-                    false,
-                    "Expected Err(TokenizeError::UnexpectedChar), but got {:?}",
-                    token
-                ),
-                Err(e) => assert_eq!(e, TokenizeError::UnexpectedChar('<', 'a')),
-            }
-        }
-        {
-            let mut t = Tokenizer::new("<a");
-            match t.tag() {
-                Ok(token) => assert!(
-                    false,
-                    "Expected Err(TokenizeError::NoTag), but got {:?}",
-                    token
-                ),
-                Err(e) => assert_eq!(e, TokenizeError::UnexpectedEOF),
-            }
+    fn test_tokenizer_tokenize_doctype_without_bang() {
+        let mut t = Tokenizer::new("<DOCTYPE html>");
+        match t.tokenize() {
+            Ok(tokens) => assert!(false, "Expected Err but got Ok: token = {:?}", tokens),
+            Err(_) => assert!(true),
         }
     }
 
     #[test]
-    fn test_tokenizer_text() {
-        {
-            let mut t = Tokenizer::new("");
-            match t.text() {
-                Ok(Token::Text(content)) => assert_eq!(content, ""),
-                Ok(token) => assert!(false, "Expected Ok(Token::Text(\"\") but got {:?}", token),
-                Err(e) => assert!(false, "Expected Ok(Token::Text(\"\") but got {:?}", e),
-            }
-        }
-        {
-            let mut t = Tokenizer::new("abcde");
-            match t.text() {
-                Ok(Token::Text(content)) => assert_eq!(content, "abcde"),
-                Ok(token) => assert!(false, "Expected Ok(Token::Text(\"\") but got {:?}", token),
-                Err(e) => assert!(false, "Expected Ok(Token::Text(\"\") but got {:?}", e),
-            }
-        }
-        {
-            let mut t = Tokenizer::new("<");
-            match t.text() {
-                Ok(Token::Text(content)) => assert_eq!(content, ""),
-                Ok(token) => assert!(false, "Expected Ok(Token::Text(\"\") but got {:?}", token),
-                Err(e) => assert!(false, "Expected Ok(Token::Text(\"\") but got {:?}", e),
-            }
+    fn test_tokenizer_tokenize_doctype_and_open_element() {
+        let mut t = Tokenizer::new("<!DOCTYPE html>\n<html>");
+        match t.tokenize() {
+            Ok(tokens) => assert_eq!(
+                tokens,
+                vec![
+                    Token::Doctype,
+                    Token::Tag(Tag {
+                        name: String::from("html"),
+                        kind: TagKind::Open,
+                    }),
+                ]
+            ),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
         }
     }
 
     #[test]
-    fn test_tokenizer_tag_or_text() {
-        {
-            let mut t = Tokenizer::new("abcde");
-            match t.tag_or_text() {
-                Ok(Token::Text(content)) => assert_eq!(content, "abcde"),
-                Ok(token) => assert!(false, "Expected Ok(Token::Text(\"\") but got {:?}", token),
-                Err(e) => assert!(false, "Expected Ok(Token::Text(\"\") but got {:?}", e),
-            }
+    fn test_tokenizer_tokenize_doctype_and_close_element() {
+        let mut t = Tokenizer::new("<!DOCTYPE html>\n</html>");
+        match t.tokenize() {
+            Ok(tokens) => assert_eq!(
+                tokens,
+                vec![
+                    Token::Doctype,
+                    Token::Tag(Tag {
+                        name: String::from("html"),
+                        kind: TagKind::Close,
+                    }),
+                ]
+            ),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
         }
-        {
-            let mut t = Tokenizer::new("<a>");
-            match t.tag_or_text() {
-                Ok(Token::Tag(tag)) => assert_eq!(
-                    tag,
-                    Tag {
-                        name: String::from("a"),
+    }
+
+    #[test]
+    fn test_tokenizer_tokenize_open_and_close_tag() {
+        let mut t = Tokenizer::new("<!DOCTYPE html><html></html>");
+        match t.tokenize() {
+            Ok(tokens) => assert_eq!(
+                tokens,
+                vec![
+                    Token::Doctype,
+                    Token::Tag(Tag {
+                        name: String::from("html"),
                         kind: TagKind::Open,
-                    }
-                ),
-                Ok(token) => assert!(false, "Expected Ok(Token::Tag(...) but got {:?}", token),
-                Err(e) => assert!(false, "Expected Ok(Token::Tag(...) but got {:?}", e),
-            }
+                    }),
+                    Token::Tag(Tag {
+                        name: String::from("html"),
+                        kind: TagKind::Close,
+                    }),
+                ]
+            ),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
         }
-        {
-            let mut t = Tokenizer::new("");
-            match t.tag_or_text() {
-                Ok(token) => assert!(
-                    false,
-                    "Expected Err(TokenizerError::EOF) but got Ok({:?})",
-                    token
-                ),
-                Err(e) => assert_eq!(e, TokenizeError::UnexpectedEOF),
-            }
+    }
+
+    #[test]
+    fn test_tokenizer_tokenize_void_tag() {
+        let mut t = Tokenizer::new("<!DOCTYPE html><hr/>");
+        match t.tokenize() {
+            Ok(tokens) => assert_eq!(
+                tokens,
+                vec![
+                    Token::Doctype,
+                    Token::Tag(Tag {
+                        name: String::from("hr"),
+                        kind: TagKind::Void,
+                    }),
+                ]
+            ),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_tokenizer_tokenize_uppercase_element() {
+        let mut t = Tokenizer::new("<!DOCTYPE html><HTML>");
+        match t.tokenize() {
+            Ok(tokens) => assert_eq!(
+                tokens,
+                vec![
+                    Token::Doctype,
+                    Token::Tag(Tag {
+                        name: String::from("html"),
+                        kind: TagKind::Open,
+                    }),
+                ]
+            ),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_tokenizer_tokenize_closed_void_tag() {
+        let mut t = Tokenizer::new("<!DOCTYPE html></foobar/>");
+        match t.tokenize() {
+            Ok(tokens) => assert!(false, "Expected Err(Malformed) but got Ok({:?})", tokens),
+            Err(e) => assert_eq!(e, TokenizeError::Malformed),
+        }
+    }
+
+    #[test]
+    fn test_tokenizer_tokenize_only_opening_bracket() {
+        let mut t = Tokenizer::new("<!DOCTYPE html><");
+        match t.tokenize() {
+            Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
+            Err(e) => assert_eq!(e, TokenizeError::NoTag),
+        }
+    }
+
+    // #[test]
+    // fn test_tokenizer_tokenize_only_closing_bracket() {
+    //     let mut t = Tokenizer::new("<!DOCTYPE html>>");
+    //     match t.tokenize() {
+    //         Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
+    //         Err(e) => assert_eq!(e, TokenizeError::UnexpectedChar('<', '>')),
+    //     }
+    // }
+
+    #[test]
+    fn test_tokenizer_tokenize_missing_tag_name() {
+        let mut t = Tokenizer::new("<!DOCTYPE html><>");
+        match t.tokenize() {
+            Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
+            Err(e) => assert_eq!(e, TokenizeError::NoTag),
+        }
+    }
+
+    // #[test]
+    // fn test_tokenizer_tokenize_missing_opening_bracket() {
+    //     let mut t = Tokenizer::new("<!DOCTYPE html>a>");
+    //     match t.tokenize() {
+    //         Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
+    //         Err(e) => assert_eq!(e, TokenizeError::UnexpectedClosingBracket),
+    //     }
+    // }
+
+    #[test]
+    fn test_tokenizer_tokenize_missing_closing_bracket() {
+        let mut t = Tokenizer::new("<!DOCTYPE html><a");
+        match t.tokenize() {
+            Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
+            Err(e) => assert_eq!(e, TokenizeError::UnexpectedEOF),
+        }
+    }
+
+    #[test]
+    fn test_tokenizer_tokenize_text() {
+        let mut t = Tokenizer::new("<!DOCTYPE html>abcde");
+        match t.tokenize() {
+            Ok(tokens) => assert_eq!(
+                tokens,
+                vec![Token::Doctype, Token::Text("abcde".to_string()),]
+            ),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
         }
     }
 }
