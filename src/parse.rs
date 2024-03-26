@@ -41,6 +41,19 @@ pub struct Element<'a> {
     pub children: Vec<Node<'a>>,
 }
 
+impl<'a> Element<'a> {
+    pub fn new(tag: &'a str) -> Self {
+        Self {
+            tag,
+            children: Vec::new(),
+        }
+    }
+
+    pub fn new_with_children(tag: &'a str, children: Vec<Node<'a>>) -> Self {
+        Self { tag, children }
+    }
+}
+
 pub fn parse<'a>(tokens: &'a Vec<tokenize::Token>) -> Result<Node<'a>> {
     let mut it = tokens.iter().peekable();
     html(&mut it)
@@ -86,15 +99,11 @@ fn expect_element<'a>(tokens: &mut Peekable<Iter<'a, tokenize::Token>>) -> Resul
             tokenize::TagKind::Open => {
                 let children = element_or_text_nodes(tokens)?;
                 let _close_tag = expect_close_tag_with_name(tokens, &tag.name)?;
-                Ok(Node::Element(Element {
-                    tag: &tag.name,
-                    children,
-                }))
+                Ok(Node::Element(Element::new_with_children(
+                    &tag.name, children,
+                )))
             }
-            tokenize::TagKind::Void => Ok(Node::Element(Element {
-                tag: &tag.name,
-                children: Vec::new(),
-            })),
+            tokenize::TagKind::Void => Ok(Node::Element(Element::new(&tag.name))),
             tokenize::TagKind::Close => Err(ParseError::UnexpectedToken),
         },
         Some(_) => Err(ParseError::UnexpectedToken),
@@ -162,10 +171,10 @@ fn html<'a>(tokens: &mut Peekable<Iter<'a, tokenize::Token>>) -> Result<Node<'a>
     let body = body(tokens)?;
     let _close_tag = expect_close_tag_with_name(tokens, "html")?;
 
-    Ok(Node::Element(Element {
-        tag: &open_tag.name,
-        children: vec![head, body],
-    }))
+    Ok(Node::Element(Element::new_with_children(
+        &open_tag.name,
+        vec![head, body],
+    )))
 }
 
 fn head<'a>(tokens: &mut Peekable<Iter<'a, tokenize::Token>>) -> Result<Node<'a>> {
@@ -173,10 +182,10 @@ fn head<'a>(tokens: &mut Peekable<Iter<'a, tokenize::Token>>) -> Result<Node<'a>
     let children = element_nodes(tokens)?;
     let _close_tag = expect_close_tag_with_name(tokens, "head")?;
 
-    Ok(Node::Element(Element {
-        tag: &open_tag.name,
+    Ok(Node::Element(Element::new_with_children(
+        &open_tag.name,
         children,
-    }))
+    )))
 }
 
 fn body<'a>(tokens: &mut Peekable<Iter<'a, tokenize::Token>>) -> Result<Node<'a>> {
@@ -184,8 +193,8 @@ fn body<'a>(tokens: &mut Peekable<Iter<'a, tokenize::Token>>) -> Result<Node<'a>
     let children = element_or_text_nodes(tokens)?;
     let _close_tag = expect_close_tag_with_name(tokens, "body")?;
 
-    Ok(Node::Element(Element {
-        tag: &open_tag.name,
+    Ok(Node::Element(Element::new_with_children(
+        &open_tag.name,
         children,
-    }))
+    )))
 }
