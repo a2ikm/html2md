@@ -287,13 +287,13 @@ fn render_hr_element(_: &parse::Element) -> Result<String> {
 }
 
 fn render_html_element(element: &parse::Element) -> Result<String> {
-    let body_node = element.children.iter().find(|node| match node {
+    if let Some(body_node) = element.children.iter().find(|node| match node {
         parse::Node::Element(e) => e.tag == "body",
         _ => false,
-    });
-    match body_node {
-        Some(parse::Node::Element(body_element)) => render_body_element(body_element),
-        _ => unreachable!(),
+    }) {
+        render_node(body_node)
+    } else {
+        unreachable!()
     }
 }
 
