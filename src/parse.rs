@@ -29,13 +29,13 @@ impl std::error::Error for ParseError {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Node<'a> {
     Element(Element<'a>),
     Text(&'a str),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Element<'a> {
     pub tag: &'a str,
     pub children: Vec<Node<'a>>,

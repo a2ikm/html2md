@@ -1,7 +1,10 @@
 use std::error::Error;
 
+use restruct::restruct;
+
 mod parse;
 mod render;
+mod restruct;
 mod tokenize;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -20,8 +23,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn convert(source: &str) -> Result<String, Box<dyn Error>> {
     let tokens = tokenize::Tokenizer::new(&source).tokenize()?;
-    let html = parse::parse(&tokens)?;
-    let markdown = render::render(&html)?;
+    let original_node = parse::parse(&tokens)?;
+    let node = restruct(&original_node);
+    let markdown = render::render(&node)?;
     Ok(markdown)
 }
 

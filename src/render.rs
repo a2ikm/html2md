@@ -138,12 +138,14 @@ fn render_element(element: &parse::Element, stack: &mut ContextStack) -> Result<
         "var" => render_var_element(element, stack),
         "wbr" => render_wbr_element(element, stack),
 
-        // for table, render() dispatches only table, th, and tr elements and builds its structure.
+        // table
         "table" => render_table_element(element, stack),
-        "th" | "td" => render_table_cell_for_tr_or_td_element(element, stack),
-        "caption" | "colgroup" | "col" | "tbocy" | "tfoot" | "thead" | "tr" => {
-            render_nothing(element, stack)
-        }
+        "thead" => render_thead_element(element, stack),
+        "tbody" => render_tbody_element(element, stack),
+        "tr" => render_tr_element(element, stack),
+        "th" => render_th_element(element, stack),
+        "td" => render_td_element(element, stack),
+        "caption" | "colgroup" | "col" | "tfoot" => render_nothing(element, stack),
 
         // render nothing
         "area" | "audio" | "button" | "canvas" | "datalist" | "dialog" | "embed" | "fieldset"
@@ -438,87 +440,71 @@ fn render_sup_element(element: &parse::Element, stack: &mut ContextStack) -> Res
     render_children(element, stack)
 }
 
-fn collect_tr_elements_in_children<'a>(
-    element: &'a parse::Element,
-) -> Result<Vec<&'a parse::Element<'a>>> {
-    let mut result = Vec::new();
+fn render_table_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+    let mut result = String::new();
 
-    for child_node in &element.children {
-        match child_node {
-            parse::Node::Element(child_element) => {
-                if child_element.tag == "tr" {
-                    result.push(child_element);
-                } else {
-                    let mut descendants = collect_tr_elements_in_children(&child_element)?;
-                    result.append(&mut descendants);
-                }
-            }
-            _ => continue,
-        }
-    }
+    let table = render_children(element, stack)?;
+    result.push_str(&table);
+    result.push_str("\n");
 
     Ok(result)
 }
 
-fn render_table_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    let tr_elements = collect_tr_elements_in_children(element)?;
-    let head_tr_element = tr_elements[0];
-    let body_tr_elements: Vec<&parse::Element> = tr_elements.into_iter().skip(1).collect();
-
+fn render_thead_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let mut result = String::new();
 
-    let head = render_table_row_for_tr_element(head_tr_element, stack)?;
-    result.push_str(&head);
+    let tr = render_children(element, stack)?;
+    result.push_str(&tr);
 
-    let separator = render_table_separator_for_head_tr_element(head_tr_element, stack)?;
+    let separator = render_table_separator_with_tr_node(&element.children[0], stack)?;
     result.push_str(&separator);
 
-    for body_tr_element in body_tr_elements {
-        let content = render_table_row_for_tr_element(body_tr_element, stack)?;
-        result.push_str(&content);
-    }
-
-    result.push_str("\n");
     Ok(result)
 }
 
-fn render_table_separator_for_head_tr_element(
-    element: &parse::Element,
-    _: &mut ContextStack,
-) -> Result<String> {
+fn render_table_separator_with_tr_node(node: &parse::Node, _: &mut ContextStack) -> Result<String> {
+    let parse::Node::Element(element) = node else {
+        unreachable!()
+    };
+    if element.tag != "tr" {
+        unreachable!()
+    };
+
     let mut result = String::new();
 
-    for _ in &element.children {
-        result.push_str("|---")
+    for _ in 0..element.children.len() {
+        result.push_str("|---");
     }
     result.push_str("|\n");
 
     Ok(result)
 }
 
-fn render_table_row_for_tr_element(
-    element: &parse::Element,
-    stack: &mut ContextStack,
-) -> Result<String> {
+fn render_tbody_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+    render_children(element, stack)
+}
+
+fn render_tr_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+    let mut cells = Vec::new();
+    for child in &element.children {
+        let cell = render_node(&child, stack)?;
+        cells.push(cell);
+    }
+
     let mut result = String::new();
 
-    for child_node in &element.children {
-        result.push_str("| ");
-
-        let content = render_node(child_node, stack)?;
-        result.push_str(&content);
-
-        result.push_str(" ");
-    }
-    result.push_str("|\n");
+    result.push_str("| ");
+    result.push_str(&cells.join(" | "));
+    result.push_str(" |\n");
 
     Ok(result)
 }
 
-fn render_table_cell_for_tr_or_td_element(
-    element: &parse::Element,
-    stack: &mut ContextStack,
-) -> Result<String> {
+fn render_th_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+    render_children(element, stack)
+}
+
+fn render_td_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
