@@ -15,9 +15,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let source = std::fs::read_to_string(&args[1])?;
-    let markdown = convert(&source);
+    let markdown = convert(&source)?;
 
-    println!("markdown = {:?}\n", markdown);
+    println!("{}", markdown);
     Ok(())
 }
 
