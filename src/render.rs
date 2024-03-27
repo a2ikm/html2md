@@ -239,7 +239,39 @@ fn render_blockquote_element(element: &parse::Element, stack: &mut ContextStack)
 }
 
 fn render_body_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    render_children(element, stack)
+    let mut parts = Vec::new();
+    let mut part = String::new();
+
+    for node in &element.children {
+        let content = render_node(&node, stack)?;
+
+        match node {
+            parse::Node::Element(child) => {
+                if is_block_element(child.tag) && part.len() > 0 {
+                    parts.push(part);
+                    part = String::new();
+                }
+                part.push_str(&content);
+            }
+            parse::Node::Text(_) => {
+                part.push_str(&content);
+            }
+        }
+    }
+    parts.push(part);
+
+    let result = parts.join("\n");
+    Ok(result)
+}
+
+fn is_block_element(name: &str) -> bool {
+    match name {
+        "address" | "article" | "aside" | "blockquote" | "canvas" | "dd" | "div" | "dl" | "dt"
+        | "fieldset" | "figcaption" | "figure" | "footer" | "form" | "h1" | "h2" | "h3" | "h4"
+        | "h5" | "h6" | "header" | "hr" | "li" | "main" | "nav" | "noscript" | "ol" | "p"
+        | "pre" | "section" | "table" | "tfoot" | "ul" | "video" => true,
+        _ => false,
+    }
 }
 
 fn render_br_element(_: &parse::Element, _: &mut ContextStack) -> Result<String> {
@@ -324,7 +356,7 @@ fn render_h6_element(element: &parse::Element, stack: &mut ContextStack) -> Resu
 }
 
 fn render_hr_element(_: &parse::Element, _: &mut ContextStack) -> Result<String> {
-    Ok(String::from("\n\n---\n\n"))
+    Ok(String::from("---\n"))
 }
 
 fn render_html_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
@@ -380,7 +412,7 @@ fn render_ol_element(element: &parse::Element, stack: &mut ContextStack) -> Resu
 
 fn render_p_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
-    wrap(&content, "", "\n\n")
+    wrap(&content, "", "\n")
 }
 
 fn render_pre_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
@@ -445,7 +477,6 @@ fn render_table_element(element: &parse::Element, stack: &mut ContextStack) -> R
 
     let table = render_children(element, stack)?;
     result.push_str(&table);
-    result.push_str("\n");
 
     Ok(result)
 }

@@ -96,7 +96,7 @@ mod tests {
         match convert(source) {
             Ok(result) => assert_eq!(
                 result,
-                "# H1\n## H2\n### H3\n#### H4\n##### H5\n###### H6\n"
+                "# H1\n\n## H2\n\n### H3\n\n#### H4\n\n##### H5\n\n###### H6\n"
             ),
             Err(e) => assert!(false, "Unexpected Err({:?})", e),
         }
@@ -107,7 +107,7 @@ mod tests {
         let source =
             "<!DOCTYPE html><html><head></head><body><p>para1</p><hr/><p>para2</p></body></html>";
         match convert(source) {
-            Ok(result) => assert_eq!(result, "para1\n\n\n\n---\n\npara2\n\n"),
+            Ok(result) => assert_eq!(result, "para1\n\n---\n\npara2\n"),
             Err(e) => assert!(false, "Unexpected Err({:?})", e),
         }
     }
@@ -117,7 +117,7 @@ mod tests {
         let source =
             "<!DOCTYPE html><html><head></head><body><p>para1</p><p>para2</p></body></html>";
         match convert(source) {
-            Ok(result) => assert_eq!(result, "para1\n\npara2\n\n"),
+            Ok(result) => assert_eq!(result, "para1\n\npara2\n"),
             Err(e) => assert!(false, "Unexpected Err({:?})", e),
         }
     }
@@ -159,7 +159,7 @@ mod tests {
         match convert(source) {
             Ok(result) => assert_eq!(
                 result,
-                "| 1,1 | 1,2 |\n|---|---|\n| 2,1 | 2,2 |\n| 3,1 | 3,2 |\n\n"
+                "| 1,1 | 1,2 |\n|---|---|\n| 2,1 | 2,2 |\n| 3,1 | 3,2 |\n"
             ),
             Err(e) => assert!(false, "Unexpected Err({:?})", e),
         }
@@ -172,8 +172,17 @@ mod tests {
         match convert(source) {
             Ok(result) => assert_eq!(
                 result,
-                "| 1,1 | 1,2 |\n|---|---|\n| 2,1 | 2,2 |\n| 3,1 | 3,2 |\n\n"
+                "| 1,1 | 1,2 |\n|---|---|\n| 2,1 | 2,2 |\n| 3,1 | 3,2 |\n"
             ),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_convert_newline_joints() {
+        let source = "<html><head></head><body><p>hello</p><p>world</p></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "hello\n\nworld\n"),
             Err(e) => assert!(false, "Unexpected Err({:?})", e),
         }
     }
