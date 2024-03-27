@@ -148,30 +148,38 @@ impl<'a> Tokenizer<'a> {
         let name = self.read_tag_name()?;
         let (attributes, ending_with_slash) = self.read_attributes()?;
 
-        if beginning_with_slash && ending_with_slash {
-            Err(TokenizeError::Malformed)
-        } else if beginning_with_slash {
-            Ok(Token::Tag(Tag {
-                name,
-                attributes,
-                kind: TagKind::Close,
-            }))
-        } else if ending_with_slash || Self::is_void_tag(&name) {
-            Ok(Token::Tag(Tag {
-                name,
-                attributes,
-                kind: TagKind::Void,
-            }))
+        if Self::is_void_element(&name) {
+            // <foo> and <foo/> are allowed for void element. </foo> or </foo/> are not.
+            if beginning_with_slash {
+                Err(TokenizeError::Malformed)
+            } else {
+                Ok(Token::Tag(Tag {
+                    name,
+                    attributes,
+                    kind: TagKind::Void,
+                }))
+            }
         } else {
-            Ok(Token::Tag(Tag {
-                name,
-                attributes,
-                kind: TagKind::Open,
-            }))
+            // <foo> and </foo> are allowed for non-void element. <foo/> or </foo/> are not.
+            if ending_with_slash {
+                Err(TokenizeError::Malformed)
+            } else if beginning_with_slash {
+                Ok(Token::Tag(Tag {
+                    name,
+                    attributes,
+                    kind: TagKind::Close,
+                }))
+            } else {
+                Ok(Token::Tag(Tag {
+                    name,
+                    attributes,
+                    kind: TagKind::Open,
+                }))
+            }
         }
     }
 
-    fn is_void_tag(name: &str) -> bool {
+    fn is_void_element(name: &str) -> bool {
         match name {
             "area" | "base" | "br" | "col" | "embed" | "hr" | "img" | "input" | "link" | "meta"
             | "param" | "source" | "track" | "wbr" => true,
@@ -563,6 +571,92 @@ mod tests {
                         attributes: AttributeMap::new(),
                     })]
                 ),
+                Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
+            }
+        }
+    }
+
+    #[test]
+    fn test_tokenizer_tokenize_void_element_with_ending_slash_are_allowed() {
+        let mut t = Tokenizer::new("<br>");
+        match t.tokenize() {
+            Ok(tokens) => assert_eq!(
+                tokens,
+                vec![Token::Tag(Tag {
+                    name: "br".to_string(),
+                    kind: TagKind::Void,
+                    attributes: AttributeMap::new(),
+                })]
+            ),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_tokenizer_tokenize_void_element_without_ending_slash_are_allowed() {
+        let mut t = Tokenizer::new("<br/>");
+        match t.tokenize() {
+            Ok(tokens) => assert_eq!(
+                tokens,
+                vec![Token::Tag(Tag {
+                    name: "br".to_string(),
+                    kind: TagKind::Void,
+                    attributes: AttributeMap::new(),
+                })]
+            ),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_tokenizer_tokenize_void_element_with_beginning_slash_is_ignored() {
+        for tag in vec!["</br>", "</br/>"] {
+            let mut t = Tokenizer::new(tag);
+            match t.tokenize() {
+                Ok(tokens) => assert_eq!(tokens, vec![]),
+                Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
+            }
+        }
+    }
+
+    #[test]
+    fn test_tokenizer_tokenize_non_void_element_with_beginning_slash_is_allowed() {
+        let mut t = Tokenizer::new("<a>");
+        match t.tokenize() {
+            Ok(tokens) => assert_eq!(
+                tokens,
+                vec![Token::Tag(Tag {
+                    name: "a".to_string(),
+                    kind: TagKind::Open,
+                    attributes: AttributeMap::new(),
+                })]
+            ),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_tokenizer_tokenize_non_void_element_without_beginning_slash_is_allowed() {
+        let mut t = Tokenizer::new("</a>");
+        match t.tokenize() {
+            Ok(tokens) => assert_eq!(
+                tokens,
+                vec![Token::Tag(Tag {
+                    name: "a".to_string(),
+                    kind: TagKind::Close,
+                    attributes: AttributeMap::new(),
+                })]
+            ),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_tokenizer_tokenize_non_void_element_with_ending_slash_is_ignored() {
+        for tag in vec!["<a/>", "</a/>"] {
+            let mut t = Tokenizer::new(tag);
+            match t.tokenize() {
+                Ok(tokens) => assert_eq!(tokens, vec![]),
                 Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
             }
         }
