@@ -16,7 +16,9 @@ pub enum TokenizeError {
 impl fmt::Display for TokenizeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            TokenizeError::Malformed => write!(f, "malformed"),
+            TokenizeError::Malformed => {
+                write!(f, "syntactically malformed token found and ignored")
+            }
             TokenizeError::NoTag => write!(f, "no tag"),
             TokenizeError::UnexpectedChar(expected, actual) => {
                 write!(f, "expected {} but got {}", expected, actual)
@@ -84,7 +86,13 @@ impl<'a> Tokenizer<'a> {
             match self.read_token() {
                 Ok(Token::SGML) => continue,
                 Ok(token) => tokens.push(token),
-                Err(e) => return Err(e),
+                Err(e) => {
+                    if e == TokenizeError::Malformed {
+                        continue;
+                    } else {
+                        return Err(e);
+                    }
+                }
             }
         }
 
@@ -425,8 +433,8 @@ mod tests {
     fn test_tokenizer_tokenize_closed_void_tag() {
         let mut t = Tokenizer::new("</foobar/>");
         match t.tokenize() {
-            Ok(tokens) => assert!(false, "Expected Err(Malformed) but got Ok({:?})", tokens),
-            Err(e) => assert_eq!(e, TokenizeError::Malformed),
+            Ok(tokens) => assert_eq!(tokens, vec![]),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
         }
     }
 
