@@ -148,7 +148,7 @@ impl<'a> Tokenizer<'a> {
                 attributes,
                 kind: TagKind::Close,
             }))
-        } else if ending_with_slash {
+        } else if ending_with_slash || Self::is_void_tag(&name) {
             Ok(Token::Tag(Tag {
                 name,
                 attributes,
@@ -160,6 +160,14 @@ impl<'a> Tokenizer<'a> {
                 attributes,
                 kind: TagKind::Open,
             }))
+        }
+    }
+
+    fn is_void_tag(name: &str) -> bool {
+        match name {
+            "area" | "base" | "br" | "col" | "embed" | "hr" | "img" | "input" | "link" | "meta"
+            | "param" | "source" | "track" | "wbr" => true,
+            _ => false,
         }
     }
 
@@ -484,7 +492,7 @@ mod tests {
                 tokens,
                 vec![Token::Tag(Tag {
                     name: "img".to_string(),
-                    kind: TagKind::Open,
+                    kind: TagKind::Void,
                     attributes: AttributeMap::from([(
                         "src".to_string(),
                         Some("hello.png".to_string())
@@ -503,7 +511,7 @@ mod tests {
                 tokens,
                 vec![Token::Tag(Tag {
                     name: "img".to_string(),
-                    kind: TagKind::Open,
+                    kind: TagKind::Void,
                     attributes: AttributeMap::from([
                         ("src".to_string(), Some("hello.png".to_string())),
                         ("width".to_string(), Some("300".to_string()))
@@ -522,11 +530,33 @@ mod tests {
                 tokens,
                 vec![Token::Tag(Tag {
                     name: "input".to_string(),
-                    kind: TagKind::Open,
+                    kind: TagKind::Void,
                     attributes: AttributeMap::from([("disabled".to_string(), None),]),
                 })]
             ),
             Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_tokenizer_tokenize_void_tag_without_ending_slash() {
+        for tag in vec![
+            "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param",
+            "source", "track", "wbr",
+        ] {
+            let source = format!("<{}>", tag);
+            let mut t = Tokenizer::new(&source);
+            match t.tokenize() {
+                Ok(tokens) => assert_eq!(
+                    tokens,
+                    vec![Token::Tag(Tag {
+                        name: tag.to_string(),
+                        kind: TagKind::Void,
+                        attributes: AttributeMap::new(),
+                    })]
+                ),
+                Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
+            }
         }
     }
 }
