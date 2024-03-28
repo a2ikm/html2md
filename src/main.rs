@@ -213,4 +213,40 @@ mod tests {
             Err(e) => assert!(false, "Unexpected Err({:?})", e),
         }
     }
+
+    #[test]
+    fn test_convert_ul_with_br() {
+        let source = "<html><head></head><body><ul><li>hello<br>world</li></ul></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "- hello\n  world\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_convert_ol_with_br() {
+        let source = "<html><head></head><body><ol><li>hello<br>world</li></ol></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "1. hello\n   world\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_convert_ul_and_ul() {
+        let source = "<html><head></head><body><ul><li><ul><li>hello</li><li>world</li></ul></li></ul></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "- - hello\n  - world\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_convert_ol_and_ol() {
+        let source = "<html><head></head><body><ol><li><ol><li>hello</li><li>world</li></ol></li></ol></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "1. 1. hello\n   1. world\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
 }

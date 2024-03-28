@@ -5,13 +5,13 @@ pub type Result<T> = std::result::Result<T, RenderError>;
 
 #[derive(Debug, PartialEq)]
 pub enum RenderError {
-    // UnexpectedNode,
+    OutsideOfList,
 }
 
 impl fmt::Display for RenderError {
-    fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            // RenderError::UnexpectedNode => write!(f, "unexpected node"),
+            RenderError::OutsideOfList => write!(f, "outside of list"),
         }
     }
 }
@@ -19,7 +19,7 @@ impl fmt::Display for RenderError {
 impl std::error::Error for RenderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
-            // RenderError::UnexpectedElement => None,
+            _ => None,
         }
     }
 }
@@ -409,16 +409,44 @@ fn render_kbd_element(element: &parse::Element, stack: &mut ContextStack) -> Res
 fn render_li_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let mut result = String::new();
 
-    match stack.get_last_list_tag() {
-        Some("ul") => result.push_str("- "),
-        Some("ol") => result.push_str("1. "),
-        _ => {}
+    let marker = match stack.get_last_list_tag() {
+        Some("ul") => "-",
+        Some("ol") => "1.",
+        _ => return Err(RenderError::OutsideOfList),
     };
 
     let content = render_children(element, stack)?;
-    result.push_str(&content);
+    let content_with_marker = prepend_list_marker(marker, &content);
+    result.push_str(&content_with_marker);
 
     Ok(result)
+}
+
+fn prepend_list_marker(marker: &str, content: &str) -> String {
+    let mut parts = Vec::new();
+
+    let sp = spaces(marker.len());
+    for (i, line) in content.lines().enumerate() {
+        let mut part = String::new();
+        if i == 0 {
+            part.push_str(marker);
+        } else {
+            part.push_str(&sp);
+        }
+        part.push_str(" ");
+        part.push_str(line);
+        parts.push(part);
+    }
+
+    parts.join("\n")
+}
+
+fn spaces(len: usize) -> String {
+    let mut result = String::new();
+    for _ in 0..len {
+        result.push_str(" ");
+    }
+    result
 }
 
 fn render_main_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
