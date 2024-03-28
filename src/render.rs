@@ -54,6 +54,15 @@ impl ContextStack {
     fn pop(&mut self) -> () {
         self.stack.pop();
     }
+
+    fn get_last_list_tag(&mut self) -> Option<&str> {
+        for ctx in self.stack.iter().rev() {
+            if ctx.tag == "ul" || ctx.tag == "ol" {
+                return Some(&ctx.tag);
+            }
+        }
+        None
+    }
 }
 
 pub fn render(node: &parse::Node) -> Result<String> {
@@ -398,7 +407,18 @@ fn render_kbd_element(element: &parse::Element, stack: &mut ContextStack) -> Res
 }
 
 fn render_li_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    render_children(element, stack)
+    let mut result = String::new();
+
+    match stack.get_last_list_tag() {
+        Some("ul") => result.push_str("- "),
+        Some("ol") => result.push_str("1. "),
+        _ => {}
+    };
+
+    let content = render_children(element, stack)?;
+    result.push_str(&content);
+
+    Ok(result)
 }
 
 fn render_main_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
@@ -418,7 +438,7 @@ fn render_nav_element(element: &parse::Element, stack: &mut ContextStack) -> Res
 }
 
 fn render_ol_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    render_children(element, stack)
+    render_children_with_joint(element, "\n", stack)
 }
 
 fn render_p_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
@@ -554,7 +574,7 @@ fn render_u_element(element: &parse::Element, stack: &mut ContextStack) -> Resul
 }
 
 fn render_ul_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    render_children(element, stack)
+    render_children_with_joint(element, "\n", stack)
 }
 
 fn render_var_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
