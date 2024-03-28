@@ -175,14 +175,17 @@ fn render_element(element: &parse::Element, stack: &mut ContextStack) -> Result<
 }
 
 fn render_children(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    render_children_with_joint(element, "", stack)
+    let mut result = String::new();
+
+    for child in &element.children {
+        let content = render_node(element.tag, &child, stack)?;
+        result.push_str(&content);
+    }
+
+    Ok(result)
 }
 
-fn render_children_with_joint(
-    element: &parse::Element,
-    joint: &str,
-    stack: &mut ContextStack,
-) -> Result<String> {
+fn render_stacked_children(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let mut parts = Vec::new();
 
     for node in &element.children {
@@ -190,7 +193,7 @@ fn render_children_with_joint(
         parts.push(content);
     }
 
-    Ok(parts.join(joint))
+    Ok(parts.join("\n"))
 }
 
 fn render_container_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
@@ -470,7 +473,7 @@ fn render_nav_element(element: &parse::Element, stack: &mut ContextStack) -> Res
 }
 
 fn render_ol_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    render_children_with_joint(element, "\n", stack)
+    render_stacked_children(element, stack)
 }
 
 fn render_p_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
@@ -536,7 +539,7 @@ fn render_sup_element(element: &parse::Element, stack: &mut ContextStack) -> Res
 }
 
 fn render_table_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    render_children_with_joint(element, "\n", stack)
+    render_stacked_children(element, stack)
 }
 
 fn render_thead_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
@@ -570,7 +573,7 @@ fn render_table_separator_with_tr_node(node: &parse::Node, _: &mut ContextStack)
 }
 
 fn render_tbody_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    render_children_with_joint(element, "\n", stack)
+    render_stacked_children(element, stack)
 }
 
 fn render_tr_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
@@ -606,7 +609,7 @@ fn render_u_element(element: &parse::Element, stack: &mut ContextStack) -> Resul
 }
 
 fn render_ul_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    render_children_with_joint(element, "\n", stack)
+    render_stacked_children(element, stack)
 }
 
 fn render_var_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
