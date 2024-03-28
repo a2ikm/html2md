@@ -52,6 +52,15 @@ mod tests {
     }
 
     #[test]
+    fn test_convert_blockquote_with_p() {
+        let source = "<!DOCTYPE html><html><head></head><body><blockquote><p>hello</p><p>world</p></blockquote></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "> hello\n> \n> world\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
     fn test_convert_br() {
         let source = "<!DOCTYPE html><html><head></head><body>hello<br/>world</body></html>";
         match convert(source) {
@@ -228,6 +237,26 @@ mod tests {
         let source = "<html><head></head><body><ol><li>hello<br>world</li></ol></body></html>";
         match convert(source) {
             Ok(result) => assert_eq!(result, "1. hello\n   world\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_convert_ul_with_p() {
+        let source =
+            "<html><head></head><body><ul><li><p>hello</p><p>world</p></li></ul></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "- hello\n  \n  world\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_convert_ol_with_p() {
+        let source =
+            "<html><head></head><body><ol><li><p>hello</p><p>world</p></li></ol></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "1. hello\n   \n   world\n"),
             Err(e) => assert!(false, "Unexpected Err({:?})", e),
         }
     }

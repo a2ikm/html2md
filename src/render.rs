@@ -193,6 +193,42 @@ fn render_children_with_joint(
     Ok(parts.join(joint))
 }
 
+fn render_container_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+    let mut parts = Vec::new();
+    let mut part = String::new();
+
+    for node in &element.children {
+        let content = render_node(element.tag, &node, stack)?;
+
+        match node {
+            parse::Node::Element(child) => {
+                if is_block_element(child.tag) && part.len() > 0 {
+                    parts.push(part);
+                    part = String::new();
+                }
+                part.push_str(&content);
+            }
+            parse::Node::Text(_) => {
+                part.push_str(&content);
+            }
+        }
+    }
+    parts.push(part);
+
+    let result = parts.join("\n\n");
+    Ok(result)
+}
+
+fn is_block_element(name: &str) -> bool {
+    match name {
+        "address" | "article" | "aside" | "blockquote" | "canvas" | "dd" | "div" | "dl" | "dt"
+        | "fieldset" | "figcaption" | "figure" | "footer" | "form" | "h1" | "h2" | "h3" | "h4"
+        | "h5" | "h6" | "header" | "hr" | "li" | "main" | "nav" | "noscript" | "ol" | "p"
+        | "pre" | "section" | "table" | "tfoot" | "ul" | "video" => true,
+        _ => false,
+    }
+}
+
 fn render_nothing(_: &parse::Element, _: &mut ContextStack) -> Result<String> {
     Ok(String::new())
 }
@@ -249,49 +285,17 @@ fn render_bdo_element(element: &parse::Element, stack: &mut ContextStack) -> Res
 }
 
 fn render_blockquote_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+    let content = render_container_element(element, stack)?;
+
     let mut parts = Vec::new();
-    let content = render_children(element, stack)?;
     for line in content.lines() {
         parts.push(format!("> {}", line));
     }
-
     Ok(parts.join("\n"))
 }
 
 fn render_body_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    let mut parts = Vec::new();
-    let mut part = String::new();
-
-    for node in &element.children {
-        let content = render_node(element.tag, &node, stack)?;
-
-        match node {
-            parse::Node::Element(child) => {
-                if is_block_element(child.tag) && part.len() > 0 {
-                    parts.push(part);
-                    part = String::new();
-                }
-                part.push_str(&content);
-            }
-            parse::Node::Text(_) => {
-                part.push_str(&content);
-            }
-        }
-    }
-    parts.push(part);
-
-    let result = parts.join("\n\n");
-    Ok(result)
-}
-
-fn is_block_element(name: &str) -> bool {
-    match name {
-        "address" | "article" | "aside" | "blockquote" | "canvas" | "dd" | "div" | "dl" | "dt"
-        | "fieldset" | "figcaption" | "figure" | "footer" | "form" | "h1" | "h2" | "h3" | "h4"
-        | "h5" | "h6" | "header" | "hr" | "li" | "main" | "nav" | "noscript" | "ol" | "p"
-        | "pre" | "section" | "table" | "tfoot" | "ul" | "video" => true,
-        _ => false,
-    }
+    render_container_element(element, stack)
 }
 
 fn render_br_element(_: &parse::Element, _: &mut ContextStack) -> Result<String> {
@@ -415,7 +419,7 @@ fn render_li_element(element: &parse::Element, stack: &mut ContextStack) -> Resu
         _ => return Err(RenderError::OutsideOfList),
     };
 
-    let content = render_children(element, stack)?;
+    let content = render_container_element(element, stack)?;
     let content_with_marker = prepend_list_marker(marker, &content);
     result.push_str(&content_with_marker);
 
