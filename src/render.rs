@@ -583,21 +583,47 @@ fn render_tr_element(element: &parse::Element, stack: &mut ContextStack) -> Resu
         cells.push(cell);
     }
 
-    let mut result = String::new();
+    let numcols = cells.len();
+    let numrows = cells
+        .iter()
+        .map(|cell| cell.lines().count())
+        .max()
+        .unwrap_or(0);
 
-    result.push_str("| ");
-    result.push_str(&cells.join(" | "));
-    result.push_str(" |");
+    let mut matrix = Vec::with_capacity(numrows);
+    for _ in 0..numrows {
+        let mut row = Vec::with_capacity(numcols);
+        for _ in 0..numcols {
+            row.push("");
+        }
+        matrix.push(row);
+    }
 
-    Ok(result)
+    for (col, cell) in cells.iter().enumerate() {
+        for (row, line) in cell.lines().enumerate() {
+            matrix[row][col] = line;
+        }
+    }
+
+    let mut parts = Vec::new();
+
+    for row in matrix {
+        let mut part = String::new();
+        part.push_str("| ");
+        part.push_str(&row.join(" | "));
+        part.push_str(" |");
+        parts.push(part);
+    }
+
+    Ok(parts.join("\n"))
 }
 
 fn render_th_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    render_children(element, stack)
+    render_container_element(element, stack)
 }
 
 fn render_td_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    render_children(element, stack)
+    render_container_element(element, stack)
 }
 
 fn render_time_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
