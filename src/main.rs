@@ -186,4 +186,13 @@ mod tests {
             Err(e) => assert!(false, "Unexpected Err({:?})", e),
         }
     }
+
+    #[test]
+    fn test_convert_table_including_p() {
+        let source = "<html><head></head><body><table><tr><th>hello</th></tr><tr><td><p>world</p></td></tr></table></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "| hello |\n|---|\n| world |\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
 }

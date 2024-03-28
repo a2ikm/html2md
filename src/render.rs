@@ -162,14 +162,22 @@ fn render_element(element: &parse::Element, stack: &mut ContextStack) -> Result<
 }
 
 fn render_children(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    let mut result = String::new();
+    render_children_with_joint(element, "", stack)
+}
+
+fn render_children_with_joint(
+    element: &parse::Element,
+    joint: &str,
+    stack: &mut ContextStack,
+) -> Result<String> {
+    let mut parts = Vec::new();
 
     for node in &element.children {
         let content = render_node(&node, stack)?;
-        result.push_str(&content);
+        parts.push(content);
     }
 
-    Ok(result)
+    Ok(parts.join(joint))
 }
 
 fn render_nothing(_: &parse::Element, _: &mut ContextStack) -> Result<String> {
@@ -228,14 +236,13 @@ fn render_bdo_element(element: &parse::Element, stack: &mut ContextStack) -> Res
 }
 
 fn render_blockquote_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    let mut result = String::new();
+    let mut parts = Vec::new();
     let content = render_children(element, stack)?;
     for line in content.lines() {
-        result.push_str("> ");
-        result.push_str(line);
-        result.push_str("\n");
+        parts.push(format!("> {}", line));
     }
-    Ok(result)
+
+    Ok(parts.join("\n"))
 }
 
 fn render_body_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
@@ -260,7 +267,7 @@ fn render_body_element(element: &parse::Element, stack: &mut ContextStack) -> Re
     }
     parts.push(part);
 
-    let result = parts.join("\n");
+    let result = parts.join("\n\n");
     Ok(result)
 }
 
@@ -327,36 +334,36 @@ fn render_em_element(element: &parse::Element, stack: &mut ContextStack) -> Resu
 
 fn render_h1_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
-    wrap(&content, "# ", "\n")
+    wrap(&content, "# ", "")
 }
 
 fn render_h2_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
-    wrap(&content, "## ", "\n")
+    wrap(&content, "## ", "")
 }
 
 fn render_h3_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
-    wrap(&content, "### ", "\n")
+    wrap(&content, "### ", "")
 }
 
 fn render_h4_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
-    wrap(&content, "#### ", "\n")
+    wrap(&content, "#### ", "")
 }
 
 fn render_h5_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
-    wrap(&content, "##### ", "\n")
+    wrap(&content, "##### ", "")
 }
 
 fn render_h6_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
-    wrap(&content, "###### ", "\n")
+    wrap(&content, "###### ", "")
 }
 
 fn render_hr_element(_: &parse::Element, _: &mut ContextStack) -> Result<String> {
-    Ok(String::from("---\n"))
+    Ok(String::from("---"))
 }
 
 fn render_html_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
@@ -412,7 +419,7 @@ fn render_ol_element(element: &parse::Element, stack: &mut ContextStack) -> Resu
 
 fn render_p_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
-    wrap(&content, "", "\n")
+    wrap(&content, "", "")
 }
 
 fn render_pre_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
@@ -473,24 +480,19 @@ fn render_sup_element(element: &parse::Element, stack: &mut ContextStack) -> Res
 }
 
 fn render_table_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    let mut result = String::new();
-
-    let table = render_children(element, stack)?;
-    result.push_str(&table);
-
-    Ok(result)
+    render_children_with_joint(element, "\n", stack)
 }
 
 fn render_thead_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    let mut result = String::new();
+    let mut parts = Vec::new();
 
     let tr = render_children(element, stack)?;
-    result.push_str(&tr);
+    parts.push(tr);
 
     let separator = render_table_separator_with_tr_node(&element.children[0], stack)?;
-    result.push_str(&separator);
+    parts.push(separator);
 
-    Ok(result)
+    Ok(parts.join("\n"))
 }
 
 fn render_table_separator_with_tr_node(node: &parse::Node, _: &mut ContextStack) -> Result<String> {
@@ -506,13 +508,13 @@ fn render_table_separator_with_tr_node(node: &parse::Node, _: &mut ContextStack)
     for _ in 0..element.children.len() {
         result.push_str("|---");
     }
-    result.push_str("|\n");
+    result.push_str("|");
 
     Ok(result)
 }
 
 fn render_tbody_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    render_children(element, stack)
+    render_children_with_joint(element, "\n", stack)
 }
 
 fn render_tr_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
@@ -526,7 +528,7 @@ fn render_tr_element(element: &parse::Element, stack: &mut ContextStack) -> Resu
 
     result.push_str("| ");
     result.push_str(&cells.join(" | "));
-    result.push_str(" |\n");
+    result.push_str(" |");
 
     Ok(result)
 }
