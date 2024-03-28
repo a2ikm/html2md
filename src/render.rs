@@ -24,11 +24,15 @@ impl std::error::Error for RenderError {
     }
 }
 
-struct Context {}
+struct Context {
+    tag: String,
+}
 
 impl Context {
-    fn new() -> Self {
-        Context {}
+    fn new(tag: &str) -> Self {
+        Context {
+            tag: tag.to_string(),
+        }
     }
 }
 
@@ -42,8 +46,8 @@ impl ContextStack {
         ContextStack { stack }
     }
 
-    fn push(&mut self) -> () {
-        let ctx = Context::new();
+    fn push(&mut self, tag: &str) -> () {
+        let ctx = Context::new(tag);
         self.stack.push(ctx)
     }
 
@@ -55,15 +59,15 @@ impl ContextStack {
 pub fn render(node: &parse::Node) -> Result<String> {
     let mut stack = ContextStack::new();
 
-    let mut result = render_node(node, &mut stack)?;
+    let mut result = render_node("", node, &mut stack)?;
     if !result.ends_with("\n") {
         result.push_str("\n");
     }
     Ok(result)
 }
 
-fn render_node(node: &parse::Node, stack: &mut ContextStack) -> Result<String> {
-    stack.push();
+fn render_node(parent_tag: &str, node: &parse::Node, stack: &mut ContextStack) -> Result<String> {
+    stack.push(parent_tag);
 
     let result = match node {
         parse::Node::Element(element) => render_element(element, stack),
@@ -173,7 +177,7 @@ fn render_children_with_joint(
     let mut parts = Vec::new();
 
     for node in &element.children {
-        let content = render_node(&node, stack)?;
+        let content = render_node(element.tag, &node, stack)?;
         parts.push(content);
     }
 
@@ -250,7 +254,7 @@ fn render_body_element(element: &parse::Element, stack: &mut ContextStack) -> Re
     let mut part = String::new();
 
     for node in &element.children {
-        let content = render_node(&node, stack)?;
+        let content = render_node(element.tag, &node, stack)?;
 
         match node {
             parse::Node::Element(child) => {
@@ -371,7 +375,7 @@ fn render_html_element(element: &parse::Element, stack: &mut ContextStack) -> Re
         parse::Node::Element(e) => e.tag == "body",
         _ => false,
     }) {
-        render_node(body_node, stack)
+        render_node(element.tag, body_node, stack)
     } else {
         unreachable!()
     }
@@ -520,7 +524,7 @@ fn render_tbody_element(element: &parse::Element, stack: &mut ContextStack) -> R
 fn render_tr_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let mut cells = Vec::new();
     for child in &element.children {
-        let cell = render_node(&child, stack)?;
+        let cell = render_node(element.tag, &child, stack)?;
         cells.push(cell);
     }
 
