@@ -89,7 +89,7 @@ fn render_node(parent_tag: &str, node: &parse::Node, stack: &mut ContextStack) -
 }
 
 fn render_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    match element.tag {
+    match element.tag.as_str() {
         "a" => render_a_element(element, stack),
         "abbr" => render_abbr_element(element, stack),
         "address" => render_address_element(element, stack),
@@ -178,7 +178,7 @@ fn render_children(element: &parse::Element, stack: &mut ContextStack) -> Result
     let mut result = String::new();
 
     for child in &element.children {
-        let content = render_node(element.tag, &child, stack)?;
+        let content = render_node(&element.tag, &child, stack)?;
         result.push_str(&content);
     }
 
@@ -189,7 +189,7 @@ fn render_stacked_children(element: &parse::Element, stack: &mut ContextStack) -
     let mut parts = Vec::new();
 
     for node in &element.children {
-        let content = render_node(element.tag, &node, stack)?;
+        let content = render_node(&element.tag, &node, stack)?;
         parts.push(content);
     }
 
@@ -201,11 +201,11 @@ fn render_container_element(element: &parse::Element, stack: &mut ContextStack) 
     let mut part = String::new();
 
     for node in &element.children {
-        let content = render_node(element.tag, &node, stack)?;
+        let content = render_node(&element.tag, &node, stack)?;
 
         match node {
             parse::Node::Element(child) => {
-                if is_block_element(child.tag) && part.len() > 0 {
+                if is_block_element(&child.tag) && part.len() > 0 {
                     parts.push(part);
                     part = String::new();
                 }
@@ -391,7 +391,7 @@ fn render_html_element(element: &parse::Element, stack: &mut ContextStack) -> Re
         parse::Node::Element(e) => e.tag == "body",
         _ => false,
     }) {
-        render_node(element.tag, body_node, stack)
+        render_node(&element.tag, body_node, stack)
     } else {
         unreachable!()
     }
@@ -579,7 +579,7 @@ fn render_tbody_element(element: &parse::Element, stack: &mut ContextStack) -> R
 fn render_tr_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let mut cells = Vec::new();
     for child in &element.children {
-        let cell = render_node(element.tag, &child, stack)?;
+        let cell = render_node(&element.tag, &child, stack)?;
         cells.push(cell);
     }
 

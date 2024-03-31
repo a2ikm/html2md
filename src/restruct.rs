@@ -1,30 +1,30 @@
 use crate::parse;
 
-pub fn restruct<'a>(node: &'a parse::Node<'a>) -> parse::Node<'a> {
+pub fn restruct(node: &parse::Node) -> parse::Node {
     match node {
         parse::Node::Element(element) => restruct_element(element),
         parse::Node::Text(content) => restruct_text(content),
     }
 }
 
-fn restruct_text<'a>(content: &'a str) -> parse::Node<'a> {
-    parse::Node::Text(content)
+fn restruct_text(content: &str) -> parse::Node {
+    parse::Node::Text(content.to_string())
 }
 
-fn restruct_element<'a>(element: &'a parse::Element) -> parse::Node<'a> {
-    let new_element = match element.tag {
+fn restruct_element(element: &parse::Element) -> parse::Node {
+    let new_element = match element.tag.as_str() {
         "table" => restruct_table_element(element),
         _ => restruct_arbitrary_element(element),
     };
     parse::Node::Element(new_element)
 }
 
-fn restruct_arbitrary_element<'a>(element: &'a parse::Element) -> parse::Element<'a> {
+fn restruct_arbitrary_element(element: &parse::Element) -> parse::Element {
     let mut children = Vec::new();
     for child in &element.children {
         children.push(restruct(&child));
     }
-    parse::Element::new_with_children(element.tag, children)
+    parse::Element::new_with_children(&element.tag, children)
 }
 
 // Ensure TABLE element structure as follows:
@@ -35,7 +35,7 @@ fn restruct_arbitrary_element<'a>(element: &'a parse::Element) -> parse::Element
 //     TBODY
 //       TR*
 //
-fn restruct_table_element<'a>(element: &'a parse::Element<'a>) -> parse::Element<'a> {
+fn restruct_table_element(element: &parse::Element) -> parse::Element {
     let mut new_element = parse::Element::new("table");
 
     let mut tr_nodes = Vec::new();
@@ -48,23 +48,19 @@ fn restruct_table_element<'a>(element: &'a parse::Element<'a>) -> parse::Element
         return new_element;
     }
 
-    let head_tr_node = tr_nodes[0];
+    let head_tr_node = tr_nodes[0].clone();
     let thead_node = parse::Node::Element(parse::Element {
-        tag: "thead",
-        children: vec![head_tr_node.clone()],
+        tag: "thead".to_string(),
+        children: vec![head_tr_node],
     });
     new_element.children.push(thead_node);
 
     let mut body_tr_nodes: Vec<parse::Node> = Vec::new();
-    for tr_node in tr_nodes
-        .into_iter()
-        .skip(1)
-        .collect::<Vec<&'a parse::Node<'a>>>()
-    {
+    for tr_node in tr_nodes.into_iter().skip(1).collect::<Vec<parse::Node>>() {
         body_tr_nodes.push(tr_node.clone());
     }
     let tbody_node = parse::Node::Element(parse::Element {
-        tag: "tbody",
+        tag: "tbody".to_string(),
         children: body_tr_nodes,
     });
     new_element.children.push(tbody_node);
@@ -72,10 +68,10 @@ fn restruct_table_element<'a>(element: &'a parse::Element<'a>) -> parse::Element
     new_element
 }
 
-fn collect_tr_nodes<'a>(node: &'a parse::Node<'a>) -> Vec<&'a parse::Node<'a>> {
+fn collect_tr_nodes(node: &parse::Node) -> Vec<parse::Node> {
     match node {
-        parse::Node::Element(element) => match element.tag {
-            "tr" => vec![node],
+        parse::Node::Element(element) => match element.tag.as_str() {
+            "tr" => vec![node.clone()],
             _ => {
                 let mut nodes = Vec::new();
                 for child in &element.children {
@@ -108,11 +104,11 @@ mod tests {
                                 vec![
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "th",
-                                        vec![parse::Node::Text("1,1")],
+                                        vec![parse::Node::Text("1,1".to_string())],
                                     )),
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "th",
-                                        vec![parse::Node::Text("1,2")],
+                                        vec![parse::Node::Text("1,2".to_string())],
                                     )),
                                 ],
                             ))],
@@ -124,18 +120,18 @@ mod tests {
                                 vec![
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "td",
-                                        vec![parse::Node::Text("2,1")],
+                                        vec![parse::Node::Text("2,1".to_string())],
                                     )),
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "td",
-                                        vec![parse::Node::Text("2,2")],
+                                        vec![parse::Node::Text("2,2".to_string())],
                                     )),
                                 ],
                             ))],
                         )),
                     ],
                 )),
-                parse::Node::Text("Hello"),
+                parse::Node::Text("Hello".to_string()),
             ],
         ));
 
@@ -152,11 +148,11 @@ mod tests {
                                 vec![
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "th",
-                                        vec![parse::Node::Text("1,1")],
+                                        vec![parse::Node::Text("1,1".to_string())],
                                     )),
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "th",
-                                        vec![parse::Node::Text("1,2")],
+                                        vec![parse::Node::Text("1,2".to_string())],
                                     )),
                                 ],
                             ))],
@@ -168,18 +164,18 @@ mod tests {
                                 vec![
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "td",
-                                        vec![parse::Node::Text("2,1")],
+                                        vec![parse::Node::Text("2,1".to_string())],
                                     )),
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "td",
-                                        vec![parse::Node::Text("2,2")],
+                                        vec![parse::Node::Text("2,2".to_string())],
                                     )),
                                 ],
                             ))],
                         )),
                     ],
                 )),
-                parse::Node::Text("Hello"),
+                parse::Node::Text("Hello".to_string()),
             ],
         ));
 
@@ -199,11 +195,11 @@ mod tests {
                             vec![
                                 parse::Node::Element(parse::Element::new_with_children(
                                     "th",
-                                    vec![parse::Node::Text("1,1")],
+                                    vec![parse::Node::Text("1,1".to_string())],
                                 )),
                                 parse::Node::Element(parse::Element::new_with_children(
                                     "th",
-                                    vec![parse::Node::Text("1,2")],
+                                    vec![parse::Node::Text("1,2".to_string())],
                                 )),
                             ],
                         )),
@@ -212,17 +208,17 @@ mod tests {
                             vec![
                                 parse::Node::Element(parse::Element::new_with_children(
                                     "td",
-                                    vec![parse::Node::Text("2,1")],
+                                    vec![parse::Node::Text("2,1".to_string())],
                                 )),
                                 parse::Node::Element(parse::Element::new_with_children(
                                     "td",
-                                    vec![parse::Node::Text("2,2")],
+                                    vec![parse::Node::Text("2,2".to_string())],
                                 )),
                             ],
                         )),
                     ],
                 )),
-                parse::Node::Text("Hello"),
+                parse::Node::Text("Hello".to_string()),
             ],
         ));
 
@@ -239,11 +235,11 @@ mod tests {
                                 vec![
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "th",
-                                        vec![parse::Node::Text("1,1")],
+                                        vec![parse::Node::Text("1,1".to_string())],
                                     )),
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "th",
-                                        vec![parse::Node::Text("1,2")],
+                                        vec![parse::Node::Text("1,2".to_string())],
                                     )),
                                 ],
                             ))],
@@ -255,18 +251,18 @@ mod tests {
                                 vec![
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "td",
-                                        vec![parse::Node::Text("2,1")],
+                                        vec![parse::Node::Text("2,1".to_string())],
                                     )),
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "td",
-                                        vec![parse::Node::Text("2,2")],
+                                        vec![parse::Node::Text("2,2".to_string())],
                                     )),
                                 ],
                             ))],
                         )),
                     ],
                 )),
-                parse::Node::Text("Hello"),
+                parse::Node::Text("Hello".to_string()),
             ],
         ));
 
