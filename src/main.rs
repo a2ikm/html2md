@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn convert(source: &str) -> Result<String, Box<dyn Error>> {
     let tokens = tokenize::Tokenizer::new(&source).tokenize()?;
-    let original_node = parse::parse(&tokens)?;
+    let original_node = parse::Parser::new(&tokens).parse()?;
     let node = restruct(&original_node);
     let markdown = render::render(&node)?;
     Ok(markdown)

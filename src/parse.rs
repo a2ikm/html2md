@@ -57,145 +57,149 @@ impl Element {
     }
 }
 
-pub fn parse(tokens: &Vec<tokenize::Token>) -> Result<Node> {
-    let mut it = tokens.iter().peekable();
-    html(&mut it)
+pub struct Parser<'a> {
+    tokens: Peekable<Iter<'a, tokenize::Token>>,
 }
 
-fn expect_open_tag_with_name<'a>(
-    tokens: &mut Peekable<Iter<'a, tokenize::Token>>,
-    name: &str,
-) -> Result<&'a tokenize::Tag> {
-    match tokens.next() {
-        Some(tokenize::Token::Tag(tag)) => {
-            if tag.name == name && tag.kind == tokenize::TagKind::Open {
-                Ok(tag)
-            } else {
-                Err(ParseError::UnexpectedToken)
+impl<'a> Parser<'a> {
+    pub fn new(tokens: &'a Vec<tokenize::Token>) -> Self {
+        let it = tokens.iter().peekable();
+        Self { tokens: it }
+    }
+
+    pub fn parse(&mut self) -> Result<Node> {
+        self.html()
+    }
+
+    fn html(&mut self) -> Result<Node> {
+        let open_tag = self.expect_open_tag_with_name("html")?;
+        let head = self.head()?;
+        let body = self.body()?;
+        let _close_tag = self.expect_close_tag_with_name("html")?;
+
+        Ok(Node::Element(Element::new_with_children(
+            &open_tag.name,
+            vec![head, body],
+        )))
+    }
+
+    fn head(&mut self) -> Result<Node> {
+        let open_tag = self.expect_open_tag_with_name("head")?;
+        let children = self.element_nodes()?;
+        let _close_tag = self.expect_close_tag_with_name("head")?;
+
+        Ok(Node::Element(Element::new_with_children(
+            &open_tag.name,
+            children,
+        )))
+    }
+
+    fn body(&mut self) -> Result<Node> {
+        let open_tag = self.expect_open_tag_with_name("body")?;
+        let children = self.element_or_text_nodes()?;
+        let _close_tag = self.expect_close_tag_with_name("body")?;
+
+        Ok(Node::Element(Element::new_with_children(
+            &open_tag.name,
+            children,
+        )))
+    }
+
+    fn expect_open_tag_with_name(&mut self, name: &str) -> Result<&'a tokenize::Tag> {
+        match self.tokens.next() {
+            Some(tokenize::Token::Tag(tag)) => {
+                if tag.name == name && tag.kind == tokenize::TagKind::Open {
+                    Ok(tag)
+                } else {
+                    Err(ParseError::UnexpectedToken)
+                }
             }
+            Some(_) => Err(ParseError::UnexpectedToken),
+            None => Err(ParseError::UnexpectedEOF),
         }
-        Some(_) => Err(ParseError::UnexpectedToken),
-        None => Err(ParseError::UnexpectedEOF),
     }
-}
 
-fn expect_close_tag_with_name<'a>(
-    tokens: &mut Peekable<Iter<'a, tokenize::Token>>,
-    name: &str,
-) -> Result<&'a tokenize::Tag> {
-    match tokens.next() {
-        Some(tokenize::Token::Tag(tag)) => {
-            if tag.name == name && tag.kind == tokenize::TagKind::Close {
-                Ok(tag)
-            } else {
-                Err(ParseError::UnexpectedToken)
+    fn expect_close_tag_with_name(&mut self, name: &str) -> Result<&'a tokenize::Tag> {
+        match self.tokens.next() {
+            Some(tokenize::Token::Tag(tag)) => {
+                if tag.name == name && tag.kind == tokenize::TagKind::Close {
+                    Ok(tag)
+                } else {
+                    Err(ParseError::UnexpectedToken)
+                }
             }
+            Some(_) => Err(ParseError::UnexpectedToken),
+            None => Err(ParseError::UnexpectedEOF),
         }
-        Some(_) => Err(ParseError::UnexpectedToken),
-        None => Err(ParseError::UnexpectedEOF),
     }
-}
 
-fn expect_element(tokens: &mut Peekable<Iter<'_, tokenize::Token>>) -> Result<Node> {
-    match tokens.next() {
-        Some(tokenize::Token::Tag(tag)) => match tag.kind {
-            tokenize::TagKind::Open => {
-                let children = element_or_text_nodes(tokens)?;
-                let _close_tag = expect_close_tag_with_name(tokens, &tag.name)?;
-                Ok(Node::Element(Element::new_with_children(
-                    &tag.name, children,
-                )))
-            }
-            tokenize::TagKind::Void => Ok(Node::Element(Element::new(&tag.name))),
-            tokenize::TagKind::Close => Err(ParseError::UnexpectedToken),
-        },
-        Some(_) => Err(ParseError::UnexpectedToken),
-        None => Err(ParseError::UnexpectedEOF),
-    }
-}
-
-fn expect_text(tokens: &mut Peekable<Iter<'_, tokenize::Token>>) -> Result<Node> {
-    match tokens.next() {
-        Some(tokenize::Token::Text(content)) => Ok(Node::Text(content.to_string())),
-        Some(_) => Err(ParseError::UnexpectedToken),
-        None => Err(ParseError::UnexpectedEOF),
-    }
-}
-
-fn element_or_text_nodes(tokens: &mut Peekable<Iter<'_, tokenize::Token>>) -> Result<Vec<Node>> {
-    let mut nodes = Vec::new();
-
-    loop {
-        match tokens.peek() {
+    fn expect_element(&mut self) -> Result<Node> {
+        match self.tokens.next() {
             Some(tokenize::Token::Tag(tag)) => match tag.kind {
-                tokenize::TagKind::Open | tokenize::TagKind::Void => {
-                    let node = expect_element(tokens)?;
+                tokenize::TagKind::Open => {
+                    let children = self.element_or_text_nodes()?;
+                    let _close_tag = self.expect_close_tag_with_name(&tag.name)?;
+                    Ok(Node::Element(Element::new_with_children(
+                        &tag.name, children,
+                    )))
+                }
+                tokenize::TagKind::Void => Ok(Node::Element(Element::new(&tag.name))),
+                tokenize::TagKind::Close => Err(ParseError::UnexpectedToken),
+            },
+            Some(_) => Err(ParseError::UnexpectedToken),
+            None => Err(ParseError::UnexpectedEOF),
+        }
+    }
+
+    fn expect_text(&mut self) -> Result<Node> {
+        match self.tokens.next() {
+            Some(tokenize::Token::Text(content)) => Ok(Node::Text(content.to_string())),
+            Some(_) => Err(ParseError::UnexpectedToken),
+            None => Err(ParseError::UnexpectedEOF),
+        }
+    }
+
+    fn element_or_text_nodes(&mut self) -> Result<Vec<Node>> {
+        let mut nodes = Vec::new();
+
+        loop {
+            match self.tokens.peek() {
+                Some(tokenize::Token::Tag(tag)) => match tag.kind {
+                    tokenize::TagKind::Open | tokenize::TagKind::Void => {
+                        let node = self.expect_element()?;
+                        nodes.push(node);
+                    }
+                    tokenize::TagKind::Close => break,
+                },
+                Some(tokenize::Token::Text(_content)) => {
+                    let node = self.expect_text()?;
                     nodes.push(node);
                 }
-                tokenize::TagKind::Close => break,
-            },
-            Some(tokenize::Token::Text(_content)) => {
-                let node = expect_text(tokens)?;
-                nodes.push(node);
+                Some(_) => return Err(ParseError::UnexpectedToken),
+                None => return Err(ParseError::UnexpectedEOF),
             }
-            Some(_) => return Err(ParseError::UnexpectedToken),
-            None => return Err(ParseError::UnexpectedEOF),
         }
+
+        Ok(nodes)
     }
 
-    Ok(nodes)
-}
+    fn element_nodes(&mut self) -> Result<Vec<Node>> {
+        let mut nodes = Vec::new();
 
-fn element_nodes(tokens: &mut Peekable<Iter<'_, tokenize::Token>>) -> Result<Vec<Node>> {
-    let mut nodes = Vec::new();
-
-    loop {
-        match tokens.peek() {
-            Some(tokenize::Token::Tag(tag)) => match tag.kind {
-                tokenize::TagKind::Open | tokenize::TagKind::Void => {
-                    let node = expect_element(tokens)?;
-                    nodes.push(node);
-                }
-                _ => break,
-            },
-            Some(_) => break,
-            None => return Err(ParseError::UnexpectedEOF),
+        loop {
+            match self.tokens.peek() {
+                Some(tokenize::Token::Tag(tag)) => match tag.kind {
+                    tokenize::TagKind::Open | tokenize::TagKind::Void => {
+                        let node = self.expect_element()?;
+                        nodes.push(node);
+                    }
+                    _ => break,
+                },
+                Some(_) => break,
+                None => return Err(ParseError::UnexpectedEOF),
+            }
         }
+
+        Ok(nodes)
     }
-
-    Ok(nodes)
-}
-
-fn html(tokens: &mut Peekable<Iter<'_, tokenize::Token>>) -> Result<Node> {
-    let open_tag = expect_open_tag_with_name(tokens, "html")?;
-    let head = head(tokens)?;
-    let body = body(tokens)?;
-    let _close_tag = expect_close_tag_with_name(tokens, "html")?;
-
-    Ok(Node::Element(Element::new_with_children(
-        &open_tag.name,
-        vec![head, body],
-    )))
-}
-
-fn head(tokens: &mut Peekable<Iter<'_, tokenize::Token>>) -> Result<Node> {
-    let open_tag = expect_open_tag_with_name(tokens, "head")?;
-    let children = element_nodes(tokens)?;
-    let _close_tag = expect_close_tag_with_name(tokens, "head")?;
-
-    Ok(Node::Element(Element::new_with_children(
-        &open_tag.name,
-        children,
-    )))
-}
-
-fn body(tokens: &mut Peekable<Iter<'_, tokenize::Token>>) -> Result<Node> {
-    let open_tag = expect_open_tag_with_name(tokens, "body")?;
-    let children = element_or_text_nodes(tokens)?;
-    let _close_tag = expect_close_tag_with_name(tokens, "body")?;
-
-    Ok(Node::Element(Element::new_with_children(
-        &open_tag.name,
-        children,
-    )))
 }
