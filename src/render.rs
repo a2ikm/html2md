@@ -247,6 +247,26 @@ fn render_unsupported_element(
     render_nothing(element, stack)
 }
 
+fn render_element_in_html_form(
+    element: &parse::Element,
+    stack: &mut ContextStack,
+) -> Result<String> {
+    let mut open_tag = String::new();
+    open_tag.push_str("<");
+    open_tag.push_str(&element.tag);
+    if element.attributes.len() > 0 {
+        for (name, value) in &element.attributes {
+            open_tag.push_str(&format!(" {}=\"{}\"", name, value));
+        }
+    }
+    open_tag.push_str(">");
+
+    let close_tag = format!("</{}>", &element.tag);
+    let content = render_children(element, stack)?;
+
+    wrap(&content, &open_tag, &close_tag)
+}
+
 fn wrap(content: &str, prefix: &str, suffix: &str) -> Result<String> {
     let mut result = String::new();
     result.push_str(prefix);
@@ -258,7 +278,9 @@ fn wrap(content: &str, prefix: &str, suffix: &str) -> Result<String> {
 fn render_a_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
 
-    if let Some(href) = element.attributes.get("href") {
+    if element.attributes.contains_key("name") {
+        render_element_in_html_form(element, stack)
+    } else if let Some(href) = element.attributes.get("href") {
         Ok(format!("[{}]({})", content, href))
     } else {
         Ok(content)

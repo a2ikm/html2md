@@ -309,4 +309,35 @@ mod tests {
             Err(e) => assert!(false, "Unexpected Err({:?})", e),
         }
     }
+
+    #[test]
+    fn test_convert_a_with_href() {
+        let source =
+            "<html><head></head><body><a href=\"https://example.com\">hello</a></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "[hello](https://example.com)\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_convert_a_with_name() {
+        let source = "<html><head></head><body><a name=\"world\">hello</a></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "<a name=\"world\">hello</a>\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_convert_a_with_href_and_name() {
+        let source = "<html><head></head><body><a href=\"https://example.com\" name=\"world\">hello</a></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(
+                result,
+                "<a href=\"https://example.com\" name=\"world\">hello</a>\n"
+            ),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
 }
