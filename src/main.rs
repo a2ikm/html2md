@@ -300,4 +300,13 @@ mod tests {
             Err(e) => assert!(false, "Unexpected Err({:?})", e),
         }
     }
+
+    #[test]
+    fn test_convert_a_without_attributes() {
+        let source = "<html><head></head><body><a>hello</a></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "hello\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
 }
