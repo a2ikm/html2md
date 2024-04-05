@@ -53,7 +53,7 @@ pub enum TagKind {
     Void,
 }
 
-pub type AttributeMap = HashMap<String, Option<String>>;
+pub type AttributeMap = HashMap<String, String>;
 
 #[derive(Debug, PartialEq)]
 pub struct Tag {
@@ -229,9 +229,9 @@ impl<'a> Tokenizer<'a> {
 
             let name = self.read_attribute_name()?;
             let value = if self.consume_char('=') {
-                Some(self.read_attribute_value()?)
+                self.read_attribute_value()?
             } else {
-                None
+                name.clone()
             };
 
             attributes.insert(name, value);
@@ -509,10 +509,7 @@ mod tests {
                 vec![Token::Tag(Tag {
                     name: "img".to_string(),
                     kind: TagKind::Void,
-                    attributes: AttributeMap::from([(
-                        "src".to_string(),
-                        Some("hello.png".to_string())
-                    ),]),
+                    attributes: AttributeMap::from([("src".to_string(), "hello.png".to_string()),]),
                 })]
             ),
             Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
@@ -529,8 +526,8 @@ mod tests {
                     name: "img".to_string(),
                     kind: TagKind::Void,
                     attributes: AttributeMap::from([
-                        ("src".to_string(), Some("hello.png".to_string())),
-                        ("width".to_string(), Some("300".to_string()))
+                        ("src".to_string(), "hello.png".to_string()),
+                        ("width".to_string(), "300".to_string()),
                     ]),
                 })]
             ),
@@ -547,7 +544,10 @@ mod tests {
                 vec![Token::Tag(Tag {
                     name: "input".to_string(),
                     kind: TagKind::Void,
-                    attributes: AttributeMap::from([("disabled".to_string(), None),]),
+                    attributes: AttributeMap::from([(
+                        "disabled".to_string(),
+                        "disabled".to_string()
+                    )]),
                 })]
             ),
             Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),

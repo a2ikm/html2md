@@ -258,7 +258,7 @@ fn wrap(content: &str, prefix: &str, suffix: &str) -> Result<String> {
 fn render_a_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
 
-    if let Some(Some(href)) = element.attributes.get("href") {
+    if let Some(href) = element.attributes.get("href") {
         Ok(format!("[{}]({})", content, href))
     } else {
         Ok(content)
