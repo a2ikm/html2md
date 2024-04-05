@@ -68,55 +68,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(&mut self) -> Result<Node> {
-        self.html()
-    }
-
-    fn html(&mut self) -> Result<Node> {
-        let open_tag = self.expect_open_tag_with_name("html")?;
-        let head = self.head()?;
-        let body = self.body()?;
-        let _close_tag = self.expect_close_tag_with_name("html")?;
-
-        Ok(Node::Element(Element::new_with_children(
-            &open_tag.name,
-            vec![head, body],
-        )))
-    }
-
-    fn head(&mut self) -> Result<Node> {
-        let open_tag = self.expect_open_tag_with_name("head")?;
-        let children = self.element_nodes()?;
-        let _close_tag = self.expect_close_tag_with_name("head")?;
-
-        Ok(Node::Element(Element::new_with_children(
-            &open_tag.name,
-            children,
-        )))
-    }
-
-    fn body(&mut self) -> Result<Node> {
-        let open_tag = self.expect_open_tag_with_name("body")?;
-        let children = self.element_or_text_nodes()?;
-        let _close_tag = self.expect_close_tag_with_name("body")?;
-
-        Ok(Node::Element(Element::new_with_children(
-            &open_tag.name,
-            children,
-        )))
-    }
-
-    fn expect_open_tag_with_name(&mut self, name: &str) -> Result<&'a tokenize::Tag> {
-        match self.tokens.next() {
-            Some(tokenize::Token::Tag(tag)) => {
-                if tag.name == name && tag.kind == tokenize::TagKind::Open {
-                    Ok(tag)
-                } else {
-                    Err(ParseError::UnexpectedToken)
-                }
-            }
-            Some(_) => Err(ParseError::UnexpectedToken),
-            None => Err(ParseError::UnexpectedEOF),
-        }
+        self.expect_element()
     }
 
     fn expect_close_tag_with_name(&mut self, name: &str) -> Result<&'a tokenize::Tag> {
@@ -176,26 +128,6 @@ impl<'a> Parser<'a> {
                     nodes.push(node);
                 }
                 Some(_) => return Err(ParseError::UnexpectedToken),
-                None => return Err(ParseError::UnexpectedEOF),
-            }
-        }
-
-        Ok(nodes)
-    }
-
-    fn element_nodes(&mut self) -> Result<Vec<Node>> {
-        let mut nodes = Vec::new();
-
-        loop {
-            match self.tokens.peek() {
-                Some(tokenize::Token::Tag(tag)) => match tag.kind {
-                    tokenize::TagKind::Open | tokenize::TagKind::Void => {
-                        let node = self.expect_element()?;
-                        nodes.push(node);
-                    }
-                    _ => break,
-                },
-                Some(_) => break,
                 None => return Err(ParseError::UnexpectedEOF),
             }
         }

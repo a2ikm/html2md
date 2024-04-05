@@ -34,6 +34,15 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_convert_only_body() {
+        let source = "<body>hello</body>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "hello\n"),
+            Err(e) => assert!(false, "Expected Ok(\"Hello!\") but got Err({:?})", e),
+        }
+    }
+
+    #[test]
     fn test_convert_text() {
         let source = "<!DOCTYPE html><html><head></head><body>Hello!</body></html>";
         match convert(source) {
