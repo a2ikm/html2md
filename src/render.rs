@@ -255,11 +255,19 @@ fn render_element_in_html_form(
     open_tag.push_str("<");
     open_tag.push_str(&element.tag);
     if element.attributes.len() > 0 {
-        for (name, value) in &element.attributes {
+        let mut names: Vec<&String> = element.attributes.keys().collect();
+        names.sort();
+
+        for name in names {
+            let value = element.attributes.get(name).unwrap();
             open_tag.push_str(&format!(" {}=\"{}\"", name, value));
         }
     }
     open_tag.push_str(">");
+
+    if element.is_void_element() {
+        return Ok(open_tag);
+    }
 
     let close_tag = format!("</{}>", &element.tag);
     let content = render_children(element, stack)?;
@@ -430,7 +438,7 @@ fn render_i_element(element: &parse::Element, stack: &mut ContextStack) -> Resul
 }
 
 fn render_img_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
-    render_children(element, stack)
+    render_element_in_html_form(element, stack)
 }
 
 fn render_ins_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {

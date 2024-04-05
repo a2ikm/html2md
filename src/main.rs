@@ -340,4 +340,16 @@ mod tests {
             Err(e) => assert!(false, "Unexpected Err({:?})", e),
         }
     }
+
+    #[test]
+    fn test_convert_img() {
+        let source = "<html><head></head><body><img src=\"https://example.com/example.png\" width=\"400\" height=\"300\"></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(
+                result,
+                "<img height=\"300\" src=\"https://example.com/example.png\" width=\"400\">\n"
+            ),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
 }

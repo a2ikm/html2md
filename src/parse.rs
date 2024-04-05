@@ -62,6 +62,14 @@ impl Element {
             attributes: attributes.clone(),
         }
     }
+
+    pub fn is_void_element(&self) -> bool {
+        match self.tag.as_str() {
+            "area" | "base" | "br" | "col" | "embed" | "hr" | "img" | "input" | "link" | "meta"
+            | "param" | "source" | "track" | "wbr" => true,
+            _ => false,
+        }
+    }
 }
 
 pub struct Parser<'a> {
