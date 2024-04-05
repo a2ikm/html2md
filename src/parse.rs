@@ -39,20 +39,27 @@ pub enum Node {
 pub struct Element {
     pub tag: String,
     pub children: Vec<Node>,
+    pub attributes: tokenize::AttributeMap,
 }
 
 impl Element {
-    pub fn new(tag: &str) -> Self {
+    pub fn new(tag: &str, attributes: &tokenize::AttributeMap) -> Self {
         Self {
             tag: tag.to_string(),
             children: Vec::new(),
+            attributes: attributes.clone(),
         }
     }
 
-    pub fn new_with_children(tag: &str, children: Vec<Node>) -> Self {
+    pub fn new_with_children(
+        tag: &str,
+        attributes: &tokenize::AttributeMap,
+        children: Vec<Node>,
+    ) -> Self {
         Self {
             tag: tag.to_string(),
             children,
+            attributes: attributes.clone(),
         }
     }
 }
@@ -92,10 +99,14 @@ impl<'a> Parser<'a> {
                     let children = self.element_or_text_nodes()?;
                     let _close_tag = self.expect_close_tag_with_name(&tag.name)?;
                     Ok(Node::Element(Element::new_with_children(
-                        &tag.name, children,
+                        &tag.name,
+                        &tag.attributes,
+                        children,
                     )))
                 }
-                tokenize::TagKind::Void => Ok(Node::Element(Element::new(&tag.name))),
+                tokenize::TagKind::Void => {
+                    Ok(Node::Element(Element::new(&tag.name, &tag.attributes)))
+                }
                 tokenize::TagKind::Close => Err(ParseError::UnexpectedToken),
             },
             Some(_) => Err(ParseError::UnexpectedToken),

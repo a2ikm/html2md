@@ -1,4 +1,4 @@
-use crate::parse;
+use crate::{parse, tokenize};
 
 pub fn restruct(node: &parse::Node) -> parse::Node {
     match node {
@@ -24,7 +24,7 @@ fn restruct_arbitrary_element(element: &parse::Element) -> parse::Element {
     for child in &element.children {
         children.push(restruct(&child));
     }
-    parse::Element::new_with_children(&element.tag, children)
+    parse::Element::new_with_children(&element.tag, &element.attributes, children)
 }
 
 // Ensure TABLE element structure as follows:
@@ -36,7 +36,7 @@ fn restruct_arbitrary_element(element: &parse::Element) -> parse::Element {
 //       TR*
 //
 fn restruct_table_element(element: &parse::Element) -> parse::Element {
-    let mut new_element = parse::Element::new("table");
+    let mut new_element = parse::Element::new("table", &element.attributes);
 
     let mut tr_nodes = Vec::new();
     for child in &element.children {
@@ -49,20 +49,22 @@ fn restruct_table_element(element: &parse::Element) -> parse::Element {
     }
 
     let head_tr_node = tr_nodes[0].clone();
-    let thead_node = parse::Node::Element(parse::Element {
-        tag: "thead".to_string(),
-        children: vec![head_tr_node],
-    });
+    let thead_node = parse::Node::Element(parse::Element::new_with_children(
+        "thead",
+        &tokenize::AttributeMap::new(),
+        vec![head_tr_node],
+    ));
     new_element.children.push(thead_node);
 
     let mut body_tr_nodes: Vec<parse::Node> = Vec::new();
     for tr_node in tr_nodes.into_iter().skip(1).collect::<Vec<parse::Node>>() {
         body_tr_nodes.push(tr_node.clone());
     }
-    let tbody_node = parse::Node::Element(parse::Element {
-        tag: "tbody".to_string(),
-        children: body_tr_nodes,
-    });
+    let tbody_node = parse::Node::Element(parse::Element::new_with_children(
+        "tbody",
+        &tokenize::AttributeMap::new(),
+        body_tr_nodes,
+    ));
     new_element.children.push(tbody_node);
 
     new_element
@@ -93,21 +95,27 @@ mod tests {
     fn test_restruct_complete_structure() {
         let original_node = parse::Node::Element(parse::Element::new_with_children(
             "body",
+            &tokenize::AttributeMap::new(),
             vec![
                 parse::Node::Element(parse::Element::new_with_children(
                     "table",
+                    &tokenize::AttributeMap::new(),
                     vec![
                         parse::Node::Element(parse::Element::new_with_children(
                             "thead",
+                            &tokenize::AttributeMap::new(),
                             vec![parse::Node::Element(parse::Element::new_with_children(
                                 "tr",
+                                &tokenize::AttributeMap::new(),
                                 vec![
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "th",
+                                        &tokenize::AttributeMap::new(),
                                         vec![parse::Node::Text("1,1".to_string())],
                                     )),
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "th",
+                                        &tokenize::AttributeMap::new(),
                                         vec![parse::Node::Text("1,2".to_string())],
                                     )),
                                 ],
@@ -115,15 +123,19 @@ mod tests {
                         )),
                         parse::Node::Element(parse::Element::new_with_children(
                             "tbody",
+                            &tokenize::AttributeMap::new(),
                             vec![parse::Node::Element(parse::Element::new_with_children(
                                 "tr",
+                                &tokenize::AttributeMap::new(),
                                 vec![
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "td",
+                                        &tokenize::AttributeMap::new(),
                                         vec![parse::Node::Text("2,1".to_string())],
                                     )),
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "td",
+                                        &tokenize::AttributeMap::new(),
                                         vec![parse::Node::Text("2,2".to_string())],
                                     )),
                                 ],
@@ -137,21 +149,27 @@ mod tests {
 
         let expected_node = parse::Node::Element(parse::Element::new_with_children(
             "body",
+            &tokenize::AttributeMap::new(),
             vec![
                 parse::Node::Element(parse::Element::new_with_children(
                     "table",
+                    &tokenize::AttributeMap::new(),
                     vec![
                         parse::Node::Element(parse::Element::new_with_children(
                             "thead",
+                            &tokenize::AttributeMap::new(),
                             vec![parse::Node::Element(parse::Element::new_with_children(
                                 "tr",
+                                &tokenize::AttributeMap::new(),
                                 vec![
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "th",
+                                        &tokenize::AttributeMap::new(),
                                         vec![parse::Node::Text("1,1".to_string())],
                                     )),
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "th",
+                                        &tokenize::AttributeMap::new(),
                                         vec![parse::Node::Text("1,2".to_string())],
                                     )),
                                 ],
@@ -159,15 +177,19 @@ mod tests {
                         )),
                         parse::Node::Element(parse::Element::new_with_children(
                             "tbody",
+                            &tokenize::AttributeMap::new(),
                             vec![parse::Node::Element(parse::Element::new_with_children(
                                 "tr",
+                                &tokenize::AttributeMap::new(),
                                 vec![
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "td",
+                                        &tokenize::AttributeMap::new(),
                                         vec![parse::Node::Text("2,1".to_string())],
                                     )),
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "td",
+                                        &tokenize::AttributeMap::new(),
                                         vec![parse::Node::Text("2,2".to_string())],
                                     )),
                                 ],
@@ -186,32 +208,40 @@ mod tests {
     fn test_restruct_no_thead_or_tbody() {
         let original_node = parse::Node::Element(parse::Element::new_with_children(
             "body",
+            &tokenize::AttributeMap::new(),
             vec![
                 parse::Node::Element(parse::Element::new_with_children(
                     "table",
+                    &tokenize::AttributeMap::new(),
                     vec![
                         parse::Node::Element(parse::Element::new_with_children(
                             "tr",
+                            &tokenize::AttributeMap::new(),
                             vec![
                                 parse::Node::Element(parse::Element::new_with_children(
                                     "th",
+                                    &tokenize::AttributeMap::new(),
                                     vec![parse::Node::Text("1,1".to_string())],
                                 )),
                                 parse::Node::Element(parse::Element::new_with_children(
                                     "th",
+                                    &tokenize::AttributeMap::new(),
                                     vec![parse::Node::Text("1,2".to_string())],
                                 )),
                             ],
                         )),
                         parse::Node::Element(parse::Element::new_with_children(
                             "tr",
+                            &tokenize::AttributeMap::new(),
                             vec![
                                 parse::Node::Element(parse::Element::new_with_children(
                                     "td",
+                                    &tokenize::AttributeMap::new(),
                                     vec![parse::Node::Text("2,1".to_string())],
                                 )),
                                 parse::Node::Element(parse::Element::new_with_children(
                                     "td",
+                                    &tokenize::AttributeMap::new(),
                                     vec![parse::Node::Text("2,2".to_string())],
                                 )),
                             ],
@@ -224,21 +254,27 @@ mod tests {
 
         let expected_node = parse::Node::Element(parse::Element::new_with_children(
             "body",
+            &tokenize::AttributeMap::new(),
             vec![
                 parse::Node::Element(parse::Element::new_with_children(
                     "table",
+                    &tokenize::AttributeMap::new(),
                     vec![
                         parse::Node::Element(parse::Element::new_with_children(
                             "thead",
+                            &tokenize::AttributeMap::new(),
                             vec![parse::Node::Element(parse::Element::new_with_children(
                                 "tr",
+                                &tokenize::AttributeMap::new(),
                                 vec![
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "th",
+                                        &tokenize::AttributeMap::new(),
                                         vec![parse::Node::Text("1,1".to_string())],
                                     )),
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "th",
+                                        &tokenize::AttributeMap::new(),
                                         vec![parse::Node::Text("1,2".to_string())],
                                     )),
                                 ],
@@ -246,15 +282,19 @@ mod tests {
                         )),
                         parse::Node::Element(parse::Element::new_with_children(
                             "tbody",
+                            &tokenize::AttributeMap::new(),
                             vec![parse::Node::Element(parse::Element::new_with_children(
                                 "tr",
+                                &tokenize::AttributeMap::new(),
                                 vec![
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "td",
+                                        &tokenize::AttributeMap::new(),
                                         vec![parse::Node::Text("2,1".to_string())],
                                     )),
                                     parse::Node::Element(parse::Element::new_with_children(
                                         "td",
+                                        &tokenize::AttributeMap::new(),
                                         vec![parse::Node::Text("2,2".to_string())],
                                     )),
                                 ],

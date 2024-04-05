@@ -53,7 +53,7 @@ pub enum TagKind {
     Void,
 }
 
-type AttributeMap = HashMap<String, Option<String>>;
+pub type AttributeMap = HashMap<String, Option<String>>;
 
 #[derive(Debug, PartialEq)]
 pub struct Tag {
