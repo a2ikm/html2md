@@ -1,7 +1,8 @@
-use crate::tokenize;
 use std::fmt;
 use std::iter::Peekable;
 use std::slice::Iter;
+
+use crate::ast::{Element, Node, Tag, TagKind, Token};
 
 pub type Result<T> = std::result::Result<T, ParseError>;
 
@@ -29,55 +30,12 @@ impl std::error::Error for ParseError {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub enum Node {
-    Element(Element),
-    Text(String),
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Element {
-    pub tag: String,
-    pub children: Vec<Node>,
-    pub attributes: tokenize::AttributeMap,
-}
-
-impl Element {
-    pub fn new(tag: &str, attributes: &tokenize::AttributeMap) -> Self {
-        Self {
-            tag: tag.to_string(),
-            children: Vec::new(),
-            attributes: attributes.clone(),
-        }
-    }
-
-    pub fn new_with_children(
-        tag: &str,
-        attributes: &tokenize::AttributeMap,
-        children: Vec<Node>,
-    ) -> Self {
-        Self {
-            tag: tag.to_string(),
-            children,
-            attributes: attributes.clone(),
-        }
-    }
-
-    pub fn is_void_element(&self) -> bool {
-        match self.tag.as_str() {
-            "area" | "base" | "br" | "col" | "embed" | "hr" | "img" | "input" | "link" | "meta"
-            | "param" | "source" | "track" | "wbr" => true,
-            _ => false,
-        }
-    }
-}
-
 pub struct Parser<'a> {
-    tokens: Peekable<Iter<'a, tokenize::Token>>,
+    tokens: Peekable<Iter<'a, Token>>,
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(tokens: &'a Vec<tokenize::Token>) -> Self {
+    pub fn new(tokens: &'a Vec<Token>) -> Self {
         let it = tokens.iter().peekable();
         Self { tokens: it }
     }
@@ -86,10 +44,10 @@ impl<'a> Parser<'a> {
         self.expect_element()
     }
 
-    fn expect_close_tag_with_name(&mut self, name: &str) -> Result<&'a tokenize::Tag> {
+    fn expect_close_tag_with_name(&mut self, name: &str) -> Result<&'a Tag> {
         match self.tokens.next() {
-            Some(tokenize::Token::Tag(tag)) => {
-                if tag.name == name && tag.kind == tokenize::TagKind::Close {
+            Some(Token::Tag(tag)) => {
+                if tag.name == name && tag.kind == TagKind::Close {
                     Ok(tag)
                 } else {
                     Err(ParseError::UnexpectedToken)
@@ -102,8 +60,8 @@ impl<'a> Parser<'a> {
 
     fn expect_element(&mut self) -> Result<Node> {
         match self.tokens.next() {
-            Some(tokenize::Token::Tag(tag)) => match tag.kind {
-                tokenize::TagKind::Open => {
+            Some(Token::Tag(tag)) => match tag.kind {
+                TagKind::Open => {
                     let children = self.element_or_text_nodes()?;
                     let _close_tag = self.expect_close_tag_with_name(&tag.name)?;
                     Ok(Node::Element(Element::new_with_children(
@@ -112,10 +70,8 @@ impl<'a> Parser<'a> {
                         children,
                     )))
                 }
-                tokenize::TagKind::Void => {
-                    Ok(Node::Element(Element::new(&tag.name, &tag.attributes)))
-                }
-                tokenize::TagKind::Close => Err(ParseError::UnexpectedToken),
+                TagKind::Void => Ok(Node::Element(Element::new(&tag.name, &tag.attributes))),
+                TagKind::Close => Err(ParseError::UnexpectedToken),
             },
             Some(_) => Err(ParseError::UnexpectedToken),
             None => Err(ParseError::UnexpectedEOF),
@@ -124,7 +80,7 @@ impl<'a> Parser<'a> {
 
     fn expect_text(&mut self) -> Result<Node> {
         match self.tokens.next() {
-            Some(tokenize::Token::Text(content)) => Ok(Node::Text(content.to_string())),
+            Some(Token::Text(content)) => Ok(Node::Text(content.to_string())),
             Some(_) => Err(ParseError::UnexpectedToken),
             None => Err(ParseError::UnexpectedEOF),
         }
@@ -135,14 +91,14 @@ impl<'a> Parser<'a> {
 
         loop {
             match self.tokens.peek() {
-                Some(tokenize::Token::Tag(tag)) => match tag.kind {
-                    tokenize::TagKind::Open | tokenize::TagKind::Void => {
+                Some(Token::Tag(tag)) => match tag.kind {
+                    TagKind::Open | TagKind::Void => {
                         let node = self.expect_element()?;
                         nodes.push(node);
                     }
-                    tokenize::TagKind::Close => break,
+                    TagKind::Close => break,
                 },
-                Some(tokenize::Token::Text(_content)) => {
+                Some(Token::Text(_content)) => {
                     let node = self.expect_text()?;
                     nodes.push(node);
                 }

@@ -1,8 +1,8 @@
 use std::char;
-use std::collections::HashMap;
 use std::fmt;
 use std::str::Chars;
 
+use crate::ast::{is_void_element, AttributeMap, Tag, TagKind, Token};
 use crate::entity;
 
 pub type Result<T> = std::result::Result<T, TokenizeError>;
@@ -39,29 +39,6 @@ impl std::error::Error for TokenizeError {
             TokenizeError::UnexpectedEOF => None,
         }
     }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Token {
-    SGML,
-    Tag(Tag),
-    Text(String),
-}
-
-#[derive(Debug, PartialEq)]
-pub enum TagKind {
-    Open,
-    Close,
-    Void,
-}
-
-pub type AttributeMap = HashMap<String, String>;
-
-#[derive(Debug, PartialEq)]
-pub struct Tag {
-    pub name: String,
-    pub kind: TagKind,
-    pub attributes: AttributeMap,
 }
 
 pub struct Tokenizer<'a> {
@@ -152,7 +129,7 @@ impl<'a> Tokenizer<'a> {
         let name = self.read_tag_name()?;
         let (attributes, ending_with_slash) = self.read_attributes()?;
 
-        if Self::is_void_element(&name) {
+        if is_void_element(&name) {
             // <foo> and <foo/> are allowed for void element. </foo> or </foo/> are not.
             if beginning_with_slash {
                 Err(TokenizeError::Malformed)
@@ -180,14 +157,6 @@ impl<'a> Tokenizer<'a> {
                     kind: TagKind::Open,
                 }))
             }
-        }
-    }
-
-    fn is_void_element(name: &str) -> bool {
-        match name {
-            "area" | "base" | "br" | "col" | "embed" | "hr" | "img" | "input" | "link" | "meta"
-            | "param" | "source" | "track" | "wbr" => true,
-            _ => false,
         }
     }
 

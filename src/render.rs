@@ -1,5 +1,6 @@
-use crate::parse;
 use std::fmt;
+
+use crate::ast::{is_block_element, is_void_element, Element, Node};
 
 pub type Result<T> = std::result::Result<T, RenderError>;
 
@@ -65,7 +66,7 @@ impl ContextStack {
     }
 }
 
-pub fn render(node: &parse::Node) -> Result<String> {
+pub fn render(node: &Node) -> Result<String> {
     let mut stack = ContextStack::new();
 
     let mut result = render_node("", node, &mut stack)?;
@@ -75,12 +76,12 @@ pub fn render(node: &parse::Node) -> Result<String> {
     Ok(result)
 }
 
-fn render_node(parent_tag: &str, node: &parse::Node, stack: &mut ContextStack) -> Result<String> {
+fn render_node(parent_tag: &str, node: &Node, stack: &mut ContextStack) -> Result<String> {
     stack.push(parent_tag);
 
     let result = match node {
-        parse::Node::Element(element) => render_element(element, stack),
-        parse::Node::Text(content) => render_text(content),
+        Node::Element(element) => render_element(element, stack),
+        Node::Text(content) => render_text(content),
     };
 
     stack.pop();
@@ -88,7 +89,7 @@ fn render_node(parent_tag: &str, node: &parse::Node, stack: &mut ContextStack) -
     result
 }
 
-fn render_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     match element.tag.as_str() {
         "a" => render_a_element(element, stack),
         "abbr" => render_abbr_element(element, stack),
@@ -174,7 +175,7 @@ fn render_element(element: &parse::Element, stack: &mut ContextStack) -> Result<
     }
 }
 
-fn render_children(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_children(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let mut result = String::new();
 
     for child in &element.children {
@@ -185,7 +186,7 @@ fn render_children(element: &parse::Element, stack: &mut ContextStack) -> Result
     Ok(result)
 }
 
-fn render_stacked_children(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_stacked_children(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let mut parts = Vec::new();
 
     for node in &element.children {
@@ -196,7 +197,7 @@ fn render_stacked_children(element: &parse::Element, stack: &mut ContextStack) -
     Ok(parts.join("\n"))
 }
 
-fn render_container_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_container_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let mut parts = Vec::new();
     let mut part = String::new();
 
@@ -204,14 +205,14 @@ fn render_container_element(element: &parse::Element, stack: &mut ContextStack) 
         let content = render_node(&element.tag, &node, stack)?;
 
         match node {
-            parse::Node::Element(child) => {
+            Node::Element(child) => {
                 if is_block_element(&child.tag) && part.len() > 0 {
                     parts.push(part);
                     part = String::new();
                 }
                 part.push_str(&content);
             }
-            parse::Node::Text(_) => {
+            Node::Text(_) => {
                 part.push_str(&content);
             }
         }
@@ -222,24 +223,11 @@ fn render_container_element(element: &parse::Element, stack: &mut ContextStack) 
     Ok(result)
 }
 
-fn is_block_element(name: &str) -> bool {
-    match name {
-        "address" | "article" | "aside" | "blockquote" | "canvas" | "dd" | "div" | "dl" | "dt"
-        | "fieldset" | "figcaption" | "figure" | "footer" | "form" | "h1" | "h2" | "h3" | "h4"
-        | "h5" | "h6" | "header" | "hr" | "li" | "main" | "nav" | "noscript" | "ol" | "p"
-        | "pre" | "section" | "table" | "tfoot" | "ul" | "video" => true,
-        _ => false,
-    }
-}
-
-fn render_nothing(_: &parse::Element, _: &mut ContextStack) -> Result<String> {
+fn render_nothing(_: &Element, _: &mut ContextStack) -> Result<String> {
     Ok(String::new())
 }
 
-fn render_unsupported_element(
-    element: &parse::Element,
-    stack: &mut ContextStack,
-) -> Result<String> {
+fn render_unsupported_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     eprintln!(
         "`{}` element is not supported. rendering nothing.",
         element.tag
@@ -247,10 +235,7 @@ fn render_unsupported_element(
     render_nothing(element, stack)
 }
 
-fn render_element_in_html_form(
-    element: &parse::Element,
-    stack: &mut ContextStack,
-) -> Result<String> {
+fn render_element_in_html_form(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let mut open_tag = String::new();
     open_tag.push_str("<");
     open_tag.push_str(&element.tag);
@@ -265,7 +250,7 @@ fn render_element_in_html_form(
     }
     open_tag.push_str(">");
 
-    if element.is_void_element() {
+    if is_void_element(&element.tag) {
         return Ok(open_tag);
     }
 
@@ -283,7 +268,7 @@ fn wrap(content: &str, prefix: &str, suffix: &str) -> Result<String> {
     Ok(result)
 }
 
-fn render_a_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_a_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
 
     if element.attributes.contains_key("name") {
@@ -295,35 +280,35 @@ fn render_a_element(element: &parse::Element, stack: &mut ContextStack) -> Resul
     }
 }
 
-fn render_abbr_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_abbr_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_address_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_address_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_article_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_article_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_aside_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_aside_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_b_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_b_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_bdi_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_bdi_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_bdo_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_bdo_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_blockquote_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_blockquote_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_container_element(element, stack)?;
 
     let mut parts = Vec::new();
@@ -333,98 +318,98 @@ fn render_blockquote_element(element: &parse::Element, stack: &mut ContextStack)
     Ok(parts.join("\n"))
 }
 
-fn render_body_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_body_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_container_element(element, stack)
 }
 
-fn render_br_element(_: &parse::Element, _: &mut ContextStack) -> Result<String> {
+fn render_br_element(_: &Element, _: &mut ContextStack) -> Result<String> {
     Ok(String::from("\n"))
 }
 
-fn render_cite_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_cite_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_code_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_code_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
     wrap(&content, "`", "`")
 }
 
-fn render_data_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_data_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_dd_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_dd_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_del_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_del_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
     wrap(&content, "~", "~")
 }
 
-fn render_details_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_details_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_dfn_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_dfn_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_div_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_div_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_dl_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_dl_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_dt_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_dt_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_em_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_em_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
     wrap(&content, "_", "_")
 }
 
-fn render_h1_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_h1_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
     wrap(&content, "# ", "")
 }
 
-fn render_h2_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_h2_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
     wrap(&content, "## ", "")
 }
 
-fn render_h3_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_h3_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
     wrap(&content, "### ", "")
 }
 
-fn render_h4_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_h4_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
     wrap(&content, "#### ", "")
 }
 
-fn render_h5_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_h5_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
     wrap(&content, "##### ", "")
 }
 
-fn render_h6_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_h6_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
     wrap(&content, "###### ", "")
 }
 
-fn render_hr_element(_: &parse::Element, _: &mut ContextStack) -> Result<String> {
+fn render_hr_element(_: &Element, _: &mut ContextStack) -> Result<String> {
     Ok(String::from("---"))
 }
 
-fn render_html_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_html_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     if let Some(body_node) = element.children.iter().find(|node| match node {
-        parse::Node::Element(e) => e.tag == "body",
+        Node::Element(e) => e.tag == "body",
         _ => false,
     }) {
         render_node(&element.tag, body_node, stack)
@@ -433,23 +418,23 @@ fn render_html_element(element: &parse::Element, stack: &mut ContextStack) -> Re
     }
 }
 
-fn render_i_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_i_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_img_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_img_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_element_in_html_form(element, stack)
 }
 
-fn render_ins_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_ins_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_kbd_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_kbd_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_li_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_li_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let mut result = String::new();
 
     let marker = match stack.get_last_list_tag() {
@@ -492,93 +477,93 @@ fn spaces(len: usize) -> String {
     result
 }
 
-fn render_main_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_main_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_mark_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_mark_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_menu_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_menu_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_nav_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_nav_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_ol_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_ol_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_stacked_children(element, stack)
 }
 
-fn render_p_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_p_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
     wrap(&content, "", "")
 }
 
-fn render_pre_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_pre_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_q_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_q_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_rp_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_rp_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_nothing(element, stack)
 }
 
-fn render_rt_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_rt_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_nothing(element, stack)
 }
 
-fn render_ruby_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_ruby_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_s_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_s_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_samp_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_samp_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_section_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_section_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_small_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_small_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_span_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_span_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_strong_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_strong_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let content = render_children(element, stack)?;
     wrap(&content, "**", "**")
 }
 
-fn render_sub_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_sub_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_summary_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_summary_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_sup_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_sup_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_table_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_table_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_stacked_children(element, stack)
 }
 
-fn render_thead_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_thead_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let mut parts = Vec::new();
 
     let tr = render_children(element, stack)?;
@@ -590,8 +575,8 @@ fn render_thead_element(element: &parse::Element, stack: &mut ContextStack) -> R
     Ok(parts.join("\n"))
 }
 
-fn render_table_separator_with_tr_node(node: &parse::Node, _: &mut ContextStack) -> Result<String> {
-    let parse::Node::Element(element) = node else {
+fn render_table_separator_with_tr_node(node: &Node, _: &mut ContextStack) -> Result<String> {
+    let Node::Element(element) = node else {
         unreachable!()
     };
     if element.tag != "tr" {
@@ -608,11 +593,11 @@ fn render_table_separator_with_tr_node(node: &parse::Node, _: &mut ContextStack)
     Ok(result)
 }
 
-fn render_tbody_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_tbody_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_stacked_children(element, stack)
 }
 
-fn render_tr_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_tr_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     let mut cells = Vec::new();
     for child in &element.children {
         let cell = render_node(&element.tag, &child, stack)?;
@@ -654,31 +639,31 @@ fn render_tr_element(element: &parse::Element, stack: &mut ContextStack) -> Resu
     Ok(parts.join("\n"))
 }
 
-fn render_th_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_th_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_container_element(element, stack)
 }
 
-fn render_td_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_td_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_container_element(element, stack)
 }
 
-fn render_time_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_time_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_u_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_u_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_ul_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_ul_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_stacked_children(element, stack)
 }
 
-fn render_var_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_var_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 
-fn render_wbr_element(element: &parse::Element, stack: &mut ContextStack) -> Result<String> {
+fn render_wbr_element(element: &Element, stack: &mut ContextStack) -> Result<String> {
     render_children(element, stack)
 }
 

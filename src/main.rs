@@ -2,6 +2,7 @@ use std::error::Error;
 
 use restruct::restruct;
 
+mod ast;
 mod entity;
 mod parse;
 mod render;
