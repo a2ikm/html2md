@@ -2,6 +2,7 @@ use std::error::Error;
 
 use restruct::restruct;
 
+mod entity;
 mod parse;
 mod render;
 mod restruct;
@@ -350,6 +351,31 @@ mod tests {
                 "<img height=\"300\" src=\"https://example.com/example.png\" width=\"400\">\n"
             ),
             Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_convert_entity() {
+        {
+            let source = "<html><head></head><body>&nbsp;</body></html>";
+            match convert(source) {
+                Ok(result) => assert_eq!(result, "&nbsp;\n"),
+                Err(e) => assert!(false, "Unexpected Err({:?})", e),
+            }
+        }
+        {
+            let source = "<html><head></head><body>&#1234;</body></html>";
+            match convert(source) {
+                Ok(result) => assert_eq!(result, "Ӓ\n"),
+                Err(e) => assert!(false, "Unexpected Err({:?})", e),
+            }
+        }
+        {
+            let source = "<html><head></head><body>&#xd06;</body></html>";
+            match convert(source) {
+                Ok(result) => assert_eq!(result, "ആ\n"),
+                Err(e) => assert!(false, "Unexpected Err({:?})", e),
+            }
         }
     }
 }
