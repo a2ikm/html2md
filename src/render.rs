@@ -25,30 +25,28 @@ impl std::error::Error for RenderError {
     }
 }
 
-struct ContextItem {
-    tag: String,
+struct ContextItem<'a> {
+    element: &'a Element,
 }
 
-impl ContextItem {
-    fn new(tag: &str) -> Self {
-        ContextItem {
-            tag: tag.to_string(),
-        }
+impl<'a> ContextItem<'a> {
+    fn new(element: &'a Element) -> Self {
+        ContextItem { element }
     }
 }
 
-struct Context {
-    items: Vec<ContextItem>,
+struct Context<'a> {
+    items: Vec<ContextItem<'a>>,
 }
 
-impl Context {
+impl<'a> Context<'a> {
     fn new() -> Self {
         let items = Vec::new();
         Context { items }
     }
 
-    fn push(&mut self, tag: &str) -> () {
-        let item = ContextItem::new(tag);
+    fn push(&mut self, element: &'a Element) -> () {
+        let item = ContextItem::new(element);
         self.items.push(item)
     }
 
@@ -58,8 +56,9 @@ impl Context {
 
     fn get_last_list_tag(&mut self) -> Option<&str> {
         for item in self.items.iter().rev() {
-            if item.tag == "ul" || item.tag == "ol" {
-                return Some(&item.tag);
+            let tag_name = &item.element.tag;
+            if tag_name == "ul" || tag_name == "ol" {
+                return Some(tag_name);
             }
         }
         None
@@ -67,7 +66,7 @@ impl Context {
 }
 
 pub struct Renderer<'a> {
-    ctx: Context,
+    ctx: Context<'a>,
     root: &'a Node,
 }
 
@@ -87,10 +86,10 @@ impl<'a> Renderer<'a> {
         Ok(result)
     }
 
-    fn render_node(&mut self, node: &Node) -> Result<String> {
+    fn render_node(&mut self, node: &'a Node) -> Result<String> {
         match node {
             Node::Element(element) => {
-                self.ctx.push(&element.tag);
+                self.ctx.push(element);
                 let result = self.render_element(element);
                 self.ctx.pop();
                 result
@@ -99,7 +98,7 @@ impl<'a> Renderer<'a> {
         }
     }
 
-    fn render_element(&mut self, element: &Element) -> Result<String> {
+    fn render_element(&mut self, element: &'a Element) -> Result<String> {
         match element.tag.as_str() {
             "a" => self.render_a_element(element),
             "abbr" => self.render_abbr_element(element),
@@ -185,7 +184,7 @@ impl<'a> Renderer<'a> {
         }
     }
 
-    fn render_children(&mut self, element: &Element) -> Result<String> {
+    fn render_children(&mut self, element: &'a Element) -> Result<String> {
         let mut result = String::new();
 
         for child in &element.children {
@@ -196,7 +195,7 @@ impl<'a> Renderer<'a> {
         Ok(result)
     }
 
-    fn render_ctxed_children(&mut self, element: &Element) -> Result<String> {
+    fn render_ctxed_children(&mut self, element: &'a Element) -> Result<String> {
         let mut parts = Vec::new();
 
         for node in &element.children {
@@ -207,7 +206,7 @@ impl<'a> Renderer<'a> {
         Ok(parts.join("\n"))
     }
 
-    fn render_container_element(&mut self, element: &Element) -> Result<String> {
+    fn render_container_element(&mut self, element: &'a Element) -> Result<String> {
         let mut parts = Vec::new();
         let mut part = String::new();
 
@@ -237,7 +236,7 @@ impl<'a> Renderer<'a> {
         Ok(String::new())
     }
 
-    fn render_unsupported_element(&mut self, element: &Element) -> Result<String> {
+    fn render_unsupported_element(&mut self, element: &'a Element) -> Result<String> {
         eprintln!(
             "`{}` element is not supported. rendering nothing.",
             element.tag
@@ -245,7 +244,7 @@ impl<'a> Renderer<'a> {
         self.render_nothing(element)
     }
 
-    fn render_element_in_html_form(&mut self, element: &Element) -> Result<String> {
+    fn render_element_in_html_form(&mut self, element: &'a Element) -> Result<String> {
         let mut open_tag = String::new();
         open_tag.push_str("<");
         open_tag.push_str(&element.tag);
@@ -278,7 +277,7 @@ impl<'a> Renderer<'a> {
         Ok(result)
     }
 
-    fn render_a_element(&mut self, element: &Element) -> Result<String> {
+    fn render_a_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
 
         if element.attributes.contains_key("name") {
@@ -290,35 +289,35 @@ impl<'a> Renderer<'a> {
         }
     }
 
-    fn render_abbr_element(&mut self, element: &Element) -> Result<String> {
+    fn render_abbr_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_address_element(&mut self, element: &Element) -> Result<String> {
+    fn render_address_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_article_element(&mut self, element: &Element) -> Result<String> {
+    fn render_article_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_aside_element(&mut self, element: &Element) -> Result<String> {
+    fn render_aside_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_b_element(&mut self, element: &Element) -> Result<String> {
+    fn render_b_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_bdi_element(&mut self, element: &Element) -> Result<String> {
+    fn render_bdi_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_bdo_element(&mut self, element: &Element) -> Result<String> {
+    fn render_bdo_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_blockquote_element(&mut self, element: &Element) -> Result<String> {
+    fn render_blockquote_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_container_element(element)?;
 
         let mut parts = Vec::new();
@@ -328,7 +327,7 @@ impl<'a> Renderer<'a> {
         Ok(parts.join("\n"))
     }
 
-    fn render_body_element(&mut self, element: &Element) -> Result<String> {
+    fn render_body_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_container_element(element)
     }
 
@@ -336,79 +335,79 @@ impl<'a> Renderer<'a> {
         Ok(String::from("\n"))
     }
 
-    fn render_cite_element(&mut self, element: &Element) -> Result<String> {
+    fn render_cite_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_code_element(&mut self, element: &Element) -> Result<String> {
+    fn render_code_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "`", "`")
     }
 
-    fn render_data_element(&mut self, element: &Element) -> Result<String> {
+    fn render_data_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_dd_element(&mut self, element: &Element) -> Result<String> {
+    fn render_dd_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_del_element(&mut self, element: &Element) -> Result<String> {
+    fn render_del_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "~", "~")
     }
 
-    fn render_details_element(&mut self, element: &Element) -> Result<String> {
+    fn render_details_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_dfn_element(&mut self, element: &Element) -> Result<String> {
+    fn render_dfn_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_div_element(&mut self, element: &Element) -> Result<String> {
+    fn render_div_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_dl_element(&mut self, element: &Element) -> Result<String> {
+    fn render_dl_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_dt_element(&mut self, element: &Element) -> Result<String> {
+    fn render_dt_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_em_element(&mut self, element: &Element) -> Result<String> {
+    fn render_em_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "_", "_")
     }
 
-    fn render_h1_element(&mut self, element: &Element) -> Result<String> {
+    fn render_h1_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "# ", "")
     }
 
-    fn render_h2_element(&mut self, element: &Element) -> Result<String> {
+    fn render_h2_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "## ", "")
     }
 
-    fn render_h3_element(&mut self, element: &Element) -> Result<String> {
+    fn render_h3_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "### ", "")
     }
 
-    fn render_h4_element(&mut self, element: &Element) -> Result<String> {
+    fn render_h4_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "#### ", "")
     }
 
-    fn render_h5_element(&mut self, element: &Element) -> Result<String> {
+    fn render_h5_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "##### ", "")
     }
 
-    fn render_h6_element(&mut self, element: &Element) -> Result<String> {
+    fn render_h6_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "###### ", "")
     }
@@ -417,7 +416,7 @@ impl<'a> Renderer<'a> {
         Ok(String::from("---"))
     }
 
-    fn render_html_element(&mut self, element: &Element) -> Result<String> {
+    fn render_html_element(&mut self, element: &'a Element) -> Result<String> {
         if let Some(body_node) = element.children.iter().find(|node| match node {
             Node::Element(e) => e.tag == "body",
             _ => false,
@@ -428,23 +427,23 @@ impl<'a> Renderer<'a> {
         }
     }
 
-    fn render_i_element(&mut self, element: &Element) -> Result<String> {
+    fn render_i_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_img_element(&mut self, element: &Element) -> Result<String> {
+    fn render_img_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_element_in_html_form(element)
     }
 
-    fn render_ins_element(&mut self, element: &Element) -> Result<String> {
+    fn render_ins_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_kbd_element(&mut self, element: &Element) -> Result<String> {
+    fn render_kbd_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_li_element(&mut self, element: &Element) -> Result<String> {
+    fn render_li_element(&mut self, element: &'a Element) -> Result<String> {
         let mut result = String::new();
 
         let marker = match self.ctx.get_last_list_tag() {
@@ -487,93 +486,93 @@ impl<'a> Renderer<'a> {
         result
     }
 
-    fn render_main_element(&mut self, element: &Element) -> Result<String> {
+    fn render_main_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_mark_element(&mut self, element: &Element) -> Result<String> {
+    fn render_mark_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_menu_element(&mut self, element: &Element) -> Result<String> {
+    fn render_menu_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_nav_element(&mut self, element: &Element) -> Result<String> {
+    fn render_nav_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_ol_element(&mut self, element: &Element) -> Result<String> {
+    fn render_ol_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_ctxed_children(element)
     }
 
-    fn render_p_element(&mut self, element: &Element) -> Result<String> {
+    fn render_p_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "", "")
     }
 
-    fn render_pre_element(&mut self, element: &Element) -> Result<String> {
+    fn render_pre_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_q_element(&mut self, element: &Element) -> Result<String> {
+    fn render_q_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_rp_element(&mut self, element: &Element) -> Result<String> {
+    fn render_rp_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_nothing(element)
     }
 
-    fn render_rt_element(&mut self, element: &Element) -> Result<String> {
+    fn render_rt_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_nothing(element)
     }
 
-    fn render_ruby_element(&mut self, element: &Element) -> Result<String> {
+    fn render_ruby_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_s_element(&mut self, element: &Element) -> Result<String> {
+    fn render_s_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_samp_element(&mut self, element: &Element) -> Result<String> {
+    fn render_samp_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_section_element(&mut self, element: &Element) -> Result<String> {
+    fn render_section_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_small_element(&mut self, element: &Element) -> Result<String> {
+    fn render_small_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_span_element(&mut self, element: &Element) -> Result<String> {
+    fn render_span_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_strong_element(&mut self, element: &Element) -> Result<String> {
+    fn render_strong_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "**", "**")
     }
 
-    fn render_sub_element(&mut self, element: &Element) -> Result<String> {
+    fn render_sub_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_summary_element(&mut self, element: &Element) -> Result<String> {
+    fn render_summary_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_sup_element(&mut self, element: &Element) -> Result<String> {
+    fn render_sup_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_table_element(&mut self, element: &Element) -> Result<String> {
+    fn render_table_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_ctxed_children(element)
     }
 
-    fn render_thead_element(&mut self, element: &Element) -> Result<String> {
+    fn render_thead_element(&mut self, element: &'a Element) -> Result<String> {
         let mut parts = Vec::new();
 
         let tr = self.render_children(element)?;
@@ -603,11 +602,11 @@ impl<'a> Renderer<'a> {
         Ok(result)
     }
 
-    fn render_tbody_element(&mut self, element: &Element) -> Result<String> {
+    fn render_tbody_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_ctxed_children(element)
     }
 
-    fn render_tr_element(&mut self, element: &Element) -> Result<String> {
+    fn render_tr_element(&mut self, element: &'a Element) -> Result<String> {
         let mut cells = Vec::new();
         for child in &element.children {
             let cell = self.render_node(&child)?;
@@ -649,31 +648,31 @@ impl<'a> Renderer<'a> {
         Ok(parts.join("\n"))
     }
 
-    fn render_th_element(&mut self, element: &Element) -> Result<String> {
+    fn render_th_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_container_element(element)
     }
 
-    fn render_td_element(&mut self, element: &Element) -> Result<String> {
+    fn render_td_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_container_element(element)
     }
 
-    fn render_time_element(&mut self, element: &Element) -> Result<String> {
+    fn render_time_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_u_element(&mut self, element: &Element) -> Result<String> {
+    fn render_u_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_ul_element(&mut self, element: &Element) -> Result<String> {
+    fn render_ul_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_ctxed_children(element)
     }
 
-    fn render_var_element(&mut self, element: &Element) -> Result<String> {
+    fn render_var_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
-    fn render_wbr_element(&mut self, element: &Element) -> Result<String> {
+    fn render_wbr_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_children(element)
     }
 
