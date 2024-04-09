@@ -27,7 +27,7 @@ fn convert(source: &str) -> Result<String, Box<dyn Error>> {
     let tokens = tokenize::Tokenizer::new(&source).tokenize()?;
     let original_node = parse::Parser::new(&tokens).parse()?;
     let node = restruct(&original_node);
-    let markdown = render::render(&node)?;
+    let markdown = render::Renderer::new(&node).render()?;
     Ok(markdown)
 }
 
