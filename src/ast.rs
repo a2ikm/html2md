@@ -52,6 +52,35 @@ impl Element {
             attributes: attributes.clone(),
         }
     }
+
+    fn css_classes(&self) -> Vec<String> {
+        match self.attributes.get("class") {
+            Some(value) => value
+                .as_str()
+                .split(" ")
+                .map(|s| s.trim().to_string())
+                .collect(),
+            None => Vec::new(),
+        }
+    }
+
+    pub fn list_depth(&self) -> u8 {
+        let found = self
+            .css_classes()
+            .iter()
+            .filter(|class| class.contains("-"))
+            .map(|class| {
+                let n = class.split("-").last().unwrap();
+                u8::from_str_radix(n, 10)
+            })
+            .filter(|n| n.is_ok())
+            .last();
+        if let Some(ok) = found {
+            ok.unwrap()
+        } else {
+            0
+        }
+    }
 }
 
 pub fn is_void_element(tag_name: &str) -> bool {
@@ -69,5 +98,56 @@ pub fn is_block_element(tag_name: &str) -> bool {
         | "h5" | "h6" | "header" | "hr" | "li" | "main" | "nav" | "noscript" | "ol" | "p"
         | "pre" | "section" | "table" | "tfoot" | "ul" | "video" => true,
         _ => false,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_element_list_depth() {
+        {
+            let element = Element::new(
+                "ul",
+                &AttributeMap::from([("class".to_string(), "foo-2".to_string())]),
+            );
+            assert_eq!(element.list_depth(), 2)
+        }
+        {
+            let element = Element::new(
+                "ul",
+                &AttributeMap::from([("class".to_string(), "bar foo-2".to_string())]),
+            );
+            assert_eq!(element.list_depth(), 2)
+        }
+        {
+            let element = Element::new(
+                "ul",
+                &AttributeMap::from([("class".to_string(), "foo-2 bar".to_string())]),
+            );
+            assert_eq!(element.list_depth(), 2)
+        }
+        {
+            let element = Element::new(
+                "ul",
+                &AttributeMap::from([("class".to_string(), "foo-2 bar-3 buz-4".to_string())]),
+            );
+            assert_eq!(element.list_depth(), 4)
+        }
+        {
+            let element = Element::new(
+                "ul",
+                &AttributeMap::from([("class".to_string(), "".to_string())]),
+            );
+            assert_eq!(element.list_depth(), 0)
+        }
+        {
+            let element = Element::new(
+                "ul",
+                &AttributeMap::from([("class".to_string(), "foo-bar".to_string())]),
+            );
+            assert_eq!(element.list_depth(), 0)
+        }
     }
 }
