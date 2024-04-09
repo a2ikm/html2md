@@ -63,6 +63,16 @@ impl<'a> Context<'a> {
         }
         None
     }
+
+    fn get_last_list_depth(&mut self) -> usize {
+        for item in self.items.iter().rev() {
+            let tag_name = &item.element.tag;
+            if tag_name == "ul" || tag_name == "ol" {
+                return item.element.list_depth();
+            }
+        }
+        0
+    }
 }
 
 pub struct Renderer<'a> {
@@ -169,6 +179,9 @@ impl<'a> Renderer<'a> {
             "th" => self.render_th_element(element),
             "td" => self.render_td_element(element),
             "caption" | "colgroup" | "col" | "tfoot" => self.render_nothing(element),
+
+            // successive lists
+            "html2md:successive-lists-wrapper" => self.render_stacked_children(element),
 
             // render nothing
             "area" | "audio" | "button" | "canvas" | "datalist" | "dialog" | "embed"
@@ -453,8 +466,9 @@ impl<'a> Renderer<'a> {
         };
 
         let content = self.render_container_element(element)?;
-        let content_with_marker = Self::prepend_list_marker(marker, &content);
-        result.push_str(&content_with_marker);
+        let marked_content = Self::prepend_list_marker(marker, &content);
+        let indented_content = Self::indent(&marked_content, self.ctx.get_last_list_depth());
+        result.push_str(&indented_content);
 
         Ok(result)
     }
@@ -462,7 +476,7 @@ impl<'a> Renderer<'a> {
     fn prepend_list_marker(marker: &str, content: &str) -> String {
         let mut parts = Vec::new();
 
-        let sp = Self::spaces(marker.len());
+        let sp = Self::spaces(marker.chars().count());
         for (i, line) in content.lines().enumerate() {
             let mut part = String::new();
             if i == 0 {
@@ -471,6 +485,20 @@ impl<'a> Renderer<'a> {
                 part.push_str(&sp);
             }
             part.push_str(" ");
+            part.push_str(line);
+            parts.push(part);
+        }
+
+        parts.join("\n")
+    }
+
+    fn indent(content: &str, depth: usize) -> String {
+        let mut parts = Vec::new();
+
+        let sp = Self::spaces(depth * 4);
+        for line in content.lines() {
+            let mut part = String::new();
+            part.push_str(&sp);
             part.push_str(line);
             parts.push(part);
         }

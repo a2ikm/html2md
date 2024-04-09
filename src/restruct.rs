@@ -20,11 +20,41 @@ fn restruct_element(element: &Element) -> Node {
 }
 
 fn restruct_arbitrary_element(element: &Element) -> Element {
-    let mut children = Vec::new();
-    for child in &element.children {
-        children.push(restruct(&child));
-    }
+    let children = group_successive_lists(&element.children);
     Element::new_with_children(&element.tag, &element.attributes, children)
+}
+
+fn group_successive_lists(nodes: &Vec<Node>) -> Vec<Node> {
+    let mut children: Vec<Node> = Vec::new();
+    let mut in_successive_lists = false;
+    let mut successive_lists = Vec::new();
+    for child in nodes {
+        if child.is_list_element() {
+            in_successive_lists = true;
+            successive_lists.push(restruct(&child));
+        } else {
+            if in_successive_lists {
+                let wrapper = Node::Element(Element::new_with_children(
+                    "html2md::successive-lists-wrapper",
+                    &AttributeMap::new(),
+                    successive_lists,
+                ));
+                children.push(wrapper);
+                successive_lists = Vec::new();
+                in_successive_lists = false;
+            }
+            children.push(restruct(&child));
+        }
+    }
+    if in_successive_lists {
+        let wrapper = Node::Element(Element::new_with_children(
+            "html2md:successive-lists-wrapper",
+            &AttributeMap::new(),
+            successive_lists,
+        ));
+        children.push(wrapper);
+    }
+    children
 }
 
 // Ensure TABLE element structure as follows:

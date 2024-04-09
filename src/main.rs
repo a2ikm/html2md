@@ -304,6 +304,33 @@ mod tests {
     }
 
     #[test]
+    fn test_convert_ol_in_google_doc_tyle() {
+        let source = "<html><head></head><body><ol class=\"foo-0\"><li>hello</li><li>world</li></ol></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "1. hello\n1. world\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_convert_indented_ol_in_google_doc_tyle() {
+        let source = "<html><head></head><body><ol class=\"foo-1\"><li>hello</li><li>world</li></ol></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "    1. hello\n    1. world\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
+    fn test_convert_ol_and_indented_ol_in_google_doc_tyle() {
+        let source = "<html><head></head><body><ol class=\"foo-0\"><li>hello</li><li>world</li></ol><ol class=\"foo-1\"><li>hello</li><li>world</li></ol></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "1. hello\n1. world\n    1. hello\n    1. world\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
     fn test_convert_a_without_attributes() {
         let source = "<html><head></head><body><a>hello</a></body></html>";
         match convert(source) {

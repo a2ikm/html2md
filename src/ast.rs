@@ -29,6 +29,15 @@ pub enum Node {
     Text(String),
 }
 
+impl Node {
+    pub fn is_list_element(&self) -> bool {
+        match self {
+            Self::Element(element) => element.is_list_element(),
+            Self::Text(_) => false,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Element {
     pub tag: String,
@@ -64,14 +73,14 @@ impl Element {
         }
     }
 
-    pub fn list_depth(&self) -> u8 {
+    pub fn list_depth(&self) -> usize {
         let found = self
             .css_classes()
             .iter()
             .filter(|class| class.contains("-"))
             .map(|class| {
                 let n = class.split("-").last().unwrap();
-                u8::from_str_radix(n, 10)
+                usize::from_str_radix(n, 10)
             })
             .filter(|n| n.is_ok())
             .last();
@@ -80,6 +89,10 @@ impl Element {
         } else {
             0
         }
+    }
+
+    pub fn is_list_element(&self) -> bool {
+        self.tag == "ul" || self.tag == "ol"
     }
 }
 
