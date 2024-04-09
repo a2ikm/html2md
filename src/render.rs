@@ -195,7 +195,7 @@ impl<'a> Renderer<'a> {
         Ok(result)
     }
 
-    fn render_ctxed_children(&mut self, element: &'a Element) -> Result<String> {
+    fn render_stacked_children(&mut self, element: &'a Element) -> Result<String> {
         let mut parts = Vec::new();
 
         for node in &element.children {
@@ -503,7 +503,7 @@ impl<'a> Renderer<'a> {
     }
 
     fn render_ol_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_ctxed_children(element)
+        self.render_stacked_children(element)
     }
 
     fn render_p_element(&mut self, element: &'a Element) -> Result<String> {
@@ -569,7 +569,7 @@ impl<'a> Renderer<'a> {
     }
 
     fn render_table_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_ctxed_children(element)
+        self.render_stacked_children(element)
     }
 
     fn render_thead_element(&mut self, element: &'a Element) -> Result<String> {
@@ -603,7 +603,7 @@ impl<'a> Renderer<'a> {
     }
 
     fn render_tbody_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_ctxed_children(element)
+        self.render_stacked_children(element)
     }
 
     fn render_tr_element(&mut self, element: &'a Element) -> Result<String> {
@@ -665,7 +665,7 @@ impl<'a> Renderer<'a> {
     }
 
     fn render_ul_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_ctxed_children(element)
+        self.render_stacked_children(element)
     }
 
     fn render_var_element(&mut self, element: &'a Element) -> Result<String> {
