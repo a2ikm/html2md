@@ -80,24 +80,23 @@ impl<'a> Renderer<'a> {
     }
 
     pub fn render(&mut self) -> Result<String> {
-        let mut result = self.render_node("", self.root)?;
+        let mut result = self.render_node(self.root)?;
         if !result.ends_with("\n") {
             result.push_str("\n");
         }
         Ok(result)
     }
 
-    fn render_node(&mut self, parent_tag: &str, node: &Node) -> Result<String> {
-        self.ctx.push(parent_tag);
-
-        let result = match node {
-            Node::Element(element) => self.render_element(element),
+    fn render_node(&mut self, node: &Node) -> Result<String> {
+        match node {
+            Node::Element(element) => {
+                self.ctx.push(&element.tag);
+                let result = self.render_element(element);
+                self.ctx.pop();
+                result
+            }
             Node::Text(content) => self.render_text(content),
-        };
-
-        self.ctx.pop();
-
-        result
+        }
     }
 
     fn render_element(&mut self, element: &Element) -> Result<String> {
@@ -190,7 +189,7 @@ impl<'a> Renderer<'a> {
         let mut result = String::new();
 
         for child in &element.children {
-            let content = self.render_node(&element.tag, &child)?;
+            let content = self.render_node(&child)?;
             result.push_str(&content);
         }
 
@@ -201,7 +200,7 @@ impl<'a> Renderer<'a> {
         let mut parts = Vec::new();
 
         for node in &element.children {
-            let content = self.render_node(&element.tag, &node)?;
+            let content = self.render_node(&node)?;
             parts.push(content);
         }
 
@@ -213,7 +212,7 @@ impl<'a> Renderer<'a> {
         let mut part = String::new();
 
         for node in &element.children {
-            let content = self.render_node(&element.tag, &node)?;
+            let content = self.render_node(&node)?;
 
             match node {
                 Node::Element(child) => {
@@ -423,7 +422,7 @@ impl<'a> Renderer<'a> {
             Node::Element(e) => e.tag == "body",
             _ => false,
         }) {
-            self.render_node(&element.tag, body_node)
+            self.render_node(body_node)
         } else {
             unreachable!()
         }
@@ -611,7 +610,7 @@ impl<'a> Renderer<'a> {
     fn render_tr_element(&mut self, element: &Element) -> Result<String> {
         let mut cells = Vec::new();
         for child in &element.children {
-            let cell = self.render_node(&element.tag, &child)?;
+            let cell = self.render_node(&child)?;
             cells.push(cell);
         }
 
