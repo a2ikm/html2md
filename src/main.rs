@@ -52,6 +52,19 @@ mod tests {
     }
 
     #[test]
+    fn test_convert_text_in_entity() {
+        let source = "<body>&#x3042;&#x3044;&#x3046;&#x3048;&#x304A;Foo&#x304B;&#x304D;&#x304F;&#x3051;&#x3053;Bar</body>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "あいうえおFooかきくけこBar\n"),
+            Err(e) => assert!(
+                false,
+                "Expected Ok(\"あいうえお Foo かきくけこ Bar\") but got Err({:?})",
+                e
+            ),
+        }
+    }
+
+    #[test]
     fn test_convert_blockquote() {
         let source = "<!DOCTYPE html><html><head></head><body><blockquote>hello<br/>world</blockquote></body></html>";
         match convert(source) {

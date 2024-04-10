@@ -282,7 +282,7 @@ impl<'a> Tokenizer<'a> {
     fn read_text(&mut self) -> Result<Token> {
         let mut content = String::new();
         loop {
-            match self.chars.next_if(|c| *c != '<') {
+            match self.chars.next_if(|c| *c != '<' && *c != '&') {
                 Some(c) => content.push(c),
                 None => break,
             }
