@@ -1,7 +1,6 @@
 use std::error::Error;
 
 mod ast;
-mod entity;
 mod parse;
 mod render;
 mod restruct;
@@ -48,19 +47,6 @@ mod tests {
         match convert(source) {
             Ok(result) => assert_eq!(result, "Hello!\n"),
             Err(e) => assert!(false, "Expected Ok(\"Hello!\") but got Err({:?})", e),
-        }
-    }
-
-    #[test]
-    fn test_convert_text_in_entity() {
-        let source = "<body>&#x3042;&#x3044;&#x3046;&#x3048;&#x304A;Foo&#x304B;&#x304D;&#x304F;&#x3051;&#x3053;Bar</body>";
-        match convert(source) {
-            Ok(result) => assert_eq!(result, "あいうえおFooかきくけこBar\n"),
-            Err(e) => assert!(
-                false,
-                "Expected Ok(\"あいうえお Foo かきくけこ Bar\") but got Err({:?})",
-                e
-            ),
         }
     }
 
@@ -393,28 +379,39 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_convert_entity() {
-        {
-            let source = "<html><head></head><body>&nbsp;</body></html>";
-            match convert(source) {
-                Ok(result) => assert_eq!(result, "&nbsp;\n"),
-                Err(e) => assert!(false, "Unexpected Err({:?})", e),
-            }
-        }
-        {
-            let source = "<html><head></head><body>&#1234;</body></html>";
-            match convert(source) {
-                Ok(result) => assert_eq!(result, "Ӓ\n"),
-                Err(e) => assert!(false, "Unexpected Err({:?})", e),
-            }
-        }
-        {
-            let source = "<html><head></head><body>&#xd06;</body></html>";
-            match convert(source) {
-                Ok(result) => assert_eq!(result, "ആ\n"),
-                Err(e) => assert!(false, "Unexpected Err({:?})", e),
-            }
-        }
-    }
+    // #[test]
+    // fn test_convert_entity() {
+    //     {
+    //         let source = "<body>&#x3042;&#x3044;&#x3046;&#x3048;&#x304A;Foo&#x304B;&#x304D;&#x304F;&#x3051;&#x3053;Bar</body>";
+    //         match convert(source) {
+    //             Ok(result) => assert_eq!(result, "あいうえおFooかきくけこBar\n"),
+    //             Err(e) => assert!(
+    //                 false,
+    //                 "Expected Ok(\"あいうえお Foo かきくけこ Bar\") but got Err({:?})",
+    //                 e
+    //             ),
+    //         }
+    //     }
+    //     {
+    //         let source = "<html><head></head><body>&nbsp;</body></html>";
+    //         match convert(source) {
+    //             Ok(result) => assert_eq!(result, "&nbsp;\n"),
+    //             Err(e) => assert!(false, "Unexpected Err({:?})", e),
+    //         }
+    //     }
+    //     {
+    //         let source = "<html><head></head><body>&#1234;</body></html>";
+    //         match convert(source) {
+    //             Ok(result) => assert_eq!(result, "Ӓ\n"),
+    //             Err(e) => assert!(false, "Unexpected Err({:?})", e),
+    //         }
+    //     }
+    //     {
+    //         let source = "<html><head></head><body>&#xd06;</body></html>";
+    //         match convert(source) {
+    //             Ok(result) => assert_eq!(result, "ആ\n"),
+    //             Err(e) => assert!(false, "Unexpected Err({:?})", e),
+    //         }
+    //     }
+    // }
 }

@@ -3,7 +3,6 @@ use std::fmt;
 use std::str::Chars;
 
 use crate::ast::{is_void_element, AttributeMap, Tag, TagKind, Token};
-use crate::entity;
 
 pub type Result<T> = std::result::Result<T, TokenizeError>;
 
@@ -98,8 +97,6 @@ impl<'a> Tokenizer<'a> {
             } else {
                 self.read_tag()
             }
-        } else if self.consume_char('&') {
-            self.read_entity()
         } else {
             self.read_text()
         }
@@ -257,32 +254,10 @@ impl<'a> Tokenizer<'a> {
         Ok(result.to_lowercase())
     }
 
-    fn read_entity(&mut self) -> Result<Token> {
-        let mut name = String::new();
-        let mut semicolon = false;
-        loop {
-            match self.chars.next_if(|c| *c != '<') {
-                Some(';') => {
-                    semicolon = true;
-                    break;
-                }
-                Some(c) => name.push(c),
-                None => break,
-            }
-        }
-
-        if semicolon {
-            let content = entity::Translator::new(&name).translate();
-            Ok(Token::Text(content))
-        } else {
-            Ok(Token::Text(format!("&{}", name)))
-        }
-    }
-
     fn read_text(&mut self) -> Result<Token> {
         let mut content = String::new();
         loop {
-            match self.chars.next_if(|c| *c != '<' && *c != '&') {
+            match self.chars.next_if(|c| *c != '<') {
                 Some(c) => content.push(c),
                 None => break,
             }
