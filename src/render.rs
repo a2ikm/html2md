@@ -705,6 +705,104 @@ impl<'a> Renderer<'a> {
     }
 
     fn render_text(&mut self, content: &str) -> Result<String> {
-        Ok(content.to_string())
+        Ok(decode_text(content))
+    }
+}
+
+fn decode_text<'a>(text: &'a str) -> String {
+    let mut init = String::new();
+    let (_, acc) = decode_text_tail_call(text, &mut init);
+    acc.to_string()
+}
+
+fn decode_text_tail_call<'a>(rest: &'a str, acc: &'a mut String) -> (&'a str, &'a String) {
+    if rest.len() == 0 {
+        return (rest, acc);
+    }
+
+    // entity is composed with at latest 3 characters: '&' + name + ';'
+    if rest.len() < 3 {
+        acc.push_str(rest);
+        return ("", acc);
+    }
+
+    let mut chars = rest.chars();
+
+    match chars.next() {
+        Some('&') => match chars.position(|c| c == ';') {
+            Some(pos) => {
+                let entity_name = rest.get(1..(pos + 1)).unwrap();
+                let decoded = decode_entity(entity_name);
+                acc.push_str(&decoded);
+                decode_text_tail_call(rest.get((pos + 2)..).unwrap(), acc)
+            }
+            None => {
+                acc.push_str(rest);
+                ("", acc)
+            }
+        },
+        Some(_) => match chars.position(|c| c == '&') {
+            Some(pos) => {
+                let plain = rest.get(0..(pos + 1)).unwrap();
+                acc.push_str(plain);
+                decode_text_tail_call(rest.get((pos + 1)..).unwrap(), acc)
+            }
+            None => {
+                acc.push_str(rest);
+                ("", acc)
+            }
+        },
+        None => unreachable!(),
+    }
+}
+
+fn decode_entity(name: &str) -> String {
+    let mut chars = name.chars();
+
+    match chars.next() {
+        Some('#') => match chars.next() {
+            Some('x') | Some('X') => {
+                let hexadecimal = name.get(2..).unwrap();
+                match u32::from_str_radix(hexadecimal, 16) {
+                    Ok(code) => match char::from_u32(code) {
+                        Some(c) => c.to_string(),
+                        None => format!("&{};", name),
+                    },
+                    Err(_) => format!("&{};", name),
+                }
+            }
+            Some(_) => {
+                let decimal = name.get(1..).unwrap();
+                match u32::from_str_radix(decimal, 10) {
+                    Ok(code) => match char::from_u32(code) {
+                        Some(c) => c.to_string(),
+                        None => format!("&{};", name),
+                    },
+                    Err(_) => format!("&{};", name),
+                }
+            }
+            None => format!("&{};", name),
+        },
+        _ => format!("&{};", name),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_decode_text() {
+        assert_eq!(decode_text("hello world"), "hello world".to_string());
+
+        assert_eq!(decode_text("&;"), "&;".to_string());
+
+        assert_eq!(decode_text("&nbsp;"), "&nbsp;".to_string());
+        assert_eq!(decode_text("&#1234;"), "Ӓ".to_string());
+        assert_eq!(decode_text("&#xd06;"), "ആ".to_string());
+        assert_eq!(decode_text("&#Xd06;"), "ആ".to_string());
+
+        assert_eq!(decode_text("foo&#1234;"), "fooӒ".to_string());
+        assert_eq!(decode_text("&#1234;foo"), "Ӓfoo".to_string());
     }
 }
