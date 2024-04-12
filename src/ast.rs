@@ -66,7 +66,7 @@ impl Element {
         match self.attributes.get("class") {
             Some(value) => value
                 .as_str()
-                .split(" ")
+                .split(' ')
                 .map(|s| s.trim().to_string())
                 .collect(),
             None => Vec::new(),
@@ -77,9 +77,9 @@ impl Element {
         let found = self
             .css_classes()
             .iter()
-            .filter(|class| class.contains("-"))
+            .filter(|class| class.contains('-'))
             .map(|class| {
-                let n = class.split("-").last().unwrap();
+                let n = class.split('-').last().unwrap();
                 usize::from_str_radix(n, 10)
             })
             .filter(|n| n.is_ok())

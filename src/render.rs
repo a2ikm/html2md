@@ -90,8 +90,8 @@ impl<'a> Renderer<'a> {
 
     pub fn render(&mut self) -> Result<String> {
         let mut result = self.render_node(self.root)?;
-        if !result.ends_with("\n") {
-            result.push_str("\n");
+        if !result.ends_with('\n') {
+            result.push('\n');
         }
         Ok(result)
     }
@@ -259,7 +259,7 @@ impl<'a> Renderer<'a> {
 
     fn render_element_in_html_form(&mut self, element: &'a Element) -> Result<String> {
         let mut open_tag = String::new();
-        open_tag.push_str("<");
+        open_tag.push('<');
         open_tag.push_str(&element.tag);
         if !element.attributes.is_empty() {
             let mut names: Vec<&String> = element.attributes.keys().collect();
@@ -270,7 +270,7 @@ impl<'a> Renderer<'a> {
                 open_tag.push_str(&format!(" {}=\"{}\"", name, value));
             }
         }
-        open_tag.push_str(">");
+        open_tag.push('>');
 
         if is_void_element(&element.tag) {
             return Ok(open_tag);
@@ -408,7 +408,7 @@ impl<'a> Renderer<'a> {
             } else {
                 part.push_str(&sp);
             }
-            part.push_str(" ");
+            part.push(' ');
             part.push_str(line);
             parts.push(part);
         }
@@ -433,7 +433,7 @@ impl<'a> Renderer<'a> {
     fn spaces(len: usize) -> String {
         let mut result = String::new();
         for _ in 0..len {
-            result.push_str(" ");
+            result.push(' ');
         }
         result
     }
@@ -477,7 +477,7 @@ impl<'a> Renderer<'a> {
         for _ in 0..element.children.len() {
             result.push_str("|---");
         }
-        result.push_str("|");
+        result.push('|');
 
         Ok(result)
     }
