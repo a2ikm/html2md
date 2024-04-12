@@ -129,6 +129,14 @@ mod tests {
         ))
     }
 
+    fn new_element_with_attributes(
+        tag_name: &str,
+        attributes: &AttributeMap,
+        children: Vec<Node>,
+    ) -> Node {
+        Node::Element(Element::new_with_children(tag_name, attributes, children))
+    }
+
     fn new_text(content: &str) -> Node {
         Node::Text(content.to_string())
     }
@@ -259,6 +267,38 @@ mod tests {
                     ],
                 ),
                 new_text("Hello"),
+            ],
+        );
+
+        assert_eq!(restruct(&original_node), expected_node);
+    }
+
+    #[test]
+    fn test_restruct_p_and_ol_in_google_doc_tyle() {
+        let original_node = new_element(
+            "body",
+            vec![
+                new_element("p", vec![new_text("hello")]),
+                new_element_with_attributes(
+                    "ol",
+                    &AttributeMap::from([("class".to_string(), "foo-0".to_string())]),
+                    vec![new_element("li", vec![new_text("world")])],
+                ),
+            ],
+        );
+
+        let expected_node = new_element(
+            "body",
+            vec![
+                new_element("p", vec![new_text("hello")]),
+                new_element(
+                    "html2md:successive-lists-wrapper",
+                    vec![new_element_with_attributes(
+                        "ol",
+                        &AttributeMap::from([("class".to_string(), "foo-0".to_string())]),
+                        vec![new_element("li", vec![new_text("world")])],
+                    )],
+                ),
             ],
         );
 
