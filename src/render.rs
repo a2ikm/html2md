@@ -541,7 +541,7 @@ impl<'a> Renderer<'a> {
     }
 }
 
-fn decode_text<'a>(text: &'a str) -> String {
+fn decode_text(text: &str) -> String {
     let mut init = String::new();
     let (_, acc) = decode_text_tail_call(text, &mut init);
     acc.to_string()
