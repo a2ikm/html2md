@@ -35,7 +35,7 @@ fn group_successive_lists(nodes: &Vec<Node>) -> Vec<Node> {
         } else {
             if in_successive_lists {
                 let wrapper = Node::Element(Element::new_with_children(
-                    "html2md::successive-lists-wrapper",
+                    "html2md:successive-lists-wrapper",
                     &AttributeMap::new(),
                     successive_lists,
                 ));
