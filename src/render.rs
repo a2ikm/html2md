@@ -601,7 +601,7 @@ fn decode_entity(name: &str) -> String {
             }
             Some(_) => {
                 let decimal = name.get(1..).unwrap();
-                match u32::from_str_radix(decimal, 10) {
+                match decimal.parse::<u32>() {
                     Ok(code) => match char::from_u32(code) {
                         Some(c) => c.to_string(),
                         None => format!("&{};", name),

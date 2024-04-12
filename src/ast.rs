@@ -80,7 +80,7 @@ impl Element {
             .filter(|class| class.contains('-'))
             .map(|class| {
                 let n = class.split('-').last().unwrap();
-                usize::from_str_radix(n, 10)
+                n.parse::<usize>()
             })
             .filter(|n| n.is_ok())
             .last();
