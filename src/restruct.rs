@@ -31,7 +31,7 @@ fn group_successive_lists(nodes: &Vec<Node>) -> Vec<Node> {
     for child in nodes {
         if child.is_list_element() {
             in_successive_lists = true;
-            successive_lists.push(restruct(&child));
+            successive_lists.push(restruct(child));
         } else {
             if in_successive_lists {
                 let wrapper = Node::Element(Element::new_with_children(
@@ -43,7 +43,7 @@ fn group_successive_lists(nodes: &Vec<Node>) -> Vec<Node> {
                 successive_lists = Vec::new();
                 in_successive_lists = false;
             }
-            children.push(restruct(&child));
+            children.push(restruct(child));
         }
     }
     if in_successive_lists {
@@ -107,7 +107,7 @@ fn collect_tr_nodes(node: &Node) -> Vec<Node> {
             _ => {
                 let mut nodes = Vec::new();
                 for child in &element.children {
-                    let mut children = collect_tr_nodes(&child);
+                    let mut children = collect_tr_nodes(child);
                     nodes.append(&mut children);
                 }
                 nodes

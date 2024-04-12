@@ -201,7 +201,7 @@ impl<'a> Renderer<'a> {
         let mut result = String::new();
 
         for child in &element.children {
-            let content = self.render_node(&child)?;
+            let content = self.render_node(child)?;
             result.push_str(&content);
         }
 
@@ -212,7 +212,7 @@ impl<'a> Renderer<'a> {
         let mut parts = Vec::new();
 
         for node in &element.children {
-            let content = self.render_node(&node)?;
+            let content = self.render_node(node)?;
             parts.push(content);
         }
 
@@ -224,7 +224,7 @@ impl<'a> Renderer<'a> {
         let mut part = String::new();
 
         for node in &element.children {
-            let content = self.render_node(&node)?;
+            let content = self.render_node(node)?;
 
             match node {
                 Node::Element(child) => {
@@ -285,7 +285,7 @@ impl<'a> Renderer<'a> {
     fn wrap(content: &str, prefix: &str, suffix: &str) -> Result<String> {
         let mut result = String::new();
         result.push_str(prefix);
-        result.push_str(&content);
+        result.push_str(content);
         result.push_str(suffix);
         Ok(result)
     }
@@ -489,7 +489,7 @@ impl<'a> Renderer<'a> {
     fn render_tr_element(&mut self, element: &'a Element) -> Result<String> {
         let mut cells = Vec::new();
         for child in &element.children {
-            let cell = self.render_node(&child)?;
+            let cell = self.render_node(child)?;
             cells.push(cell);
         }
 
