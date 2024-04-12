@@ -128,7 +128,7 @@ impl<'a> Renderer<'a> {
             "del" => self.render_del_element(element),
             "details" => self.render_children(element),
             "dfn" => self.render_children(element),
-            "div" => self.render_children(element),
+            "div" => self.render_container_element(element),
             "dl" => self.render_children(element),
             "dt" => self.render_dt_element(element),
             "em" => self.render_em_element(element),

@@ -98,6 +98,16 @@ mod tests {
     }
 
     #[test]
+    fn test_convert_div() {
+        let source =
+            "<!DOCTYPE html><html><head></head><body><div><p>hello</p><p>world</p></div></body></html>";
+        match convert(source) {
+            Ok(result) => assert_eq!(result, "hello\n\nworld\n"),
+            Err(e) => assert!(false, "Unexpected Err({:?})", e),
+        }
+    }
+
+    #[test]
     fn test_convert_em() {
         let source =
             "<!DOCTYPE html><html><head></head><body>This is <em>hello</em>.</body></html>";
