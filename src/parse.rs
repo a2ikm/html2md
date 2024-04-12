@@ -35,7 +35,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(tokens: &'a Vec<Token>) -> Self {
+    pub fn new(tokens: &'a [Token]) -> Self {
         let it = tokens.iter().peekable();
         Self { tokens: it }
     }
