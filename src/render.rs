@@ -45,12 +45,12 @@ impl<'a> Context<'a> {
         Context { items }
     }
 
-    fn push(&mut self, element: &'a Element) -> () {
+    fn push(&mut self, element: &'a Element) {
         let item = ContextItem::new(element);
         self.items.push(item)
     }
 
-    fn pop(&mut self) -> () {
+    fn pop(&mut self) {
         self.items.pop();
     }
 

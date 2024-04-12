@@ -77,7 +77,7 @@ impl<'a> Tokenizer<'a> {
         Ok(tokens)
     }
 
-    fn skip_whitespaces(&mut self) -> () {
+    fn skip_whitespaces(&mut self) {
         while self.chars.next_if(|c| c.is_ascii_whitespace()).is_some() {
             continue;
         }
