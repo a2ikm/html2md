@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
-    SGML,
+    Sgml,
     Tag(Tag),
     Text(String),
 }

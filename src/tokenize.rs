@@ -62,7 +62,7 @@ impl<'a> Tokenizer<'a> {
             }
 
             match self.read_token() {
-                Ok(Token::SGML) => continue,
+                Ok(Token::Sgml) => continue,
                 Ok(token) => tokens.push(token),
                 Err(e) => {
                     if e == TokenizeError::Malformed {
@@ -115,7 +115,7 @@ impl<'a> Tokenizer<'a> {
             }
         }
 
-        Ok(Token::SGML)
+        Ok(Token::Sgml)
     }
 
     fn read_tag(&mut self) -> Result<Token> {
