@@ -111,25 +111,25 @@ impl<'a> Renderer<'a> {
     fn render_element(&mut self, element: &'a Element) -> Result<String> {
         match element.tag.as_str() {
             "a" => self.render_a_element(element),
-            "abbr" => self.render_abbr_element(element),
-            "address" => self.render_address_element(element),
-            "article" => self.render_article_element(element),
-            "aside" => self.render_aside_element(element),
-            "b" => self.render_b_element(element),
-            "bdi" => self.render_bdi_element(element),
-            "bdo" => self.render_bdo_element(element),
+            "abbr" => self.render_children(element),
+            "address" => self.render_children(element),
+            "article" => self.render_children(element),
+            "aside" => self.render_children(element),
+            "b" => self.render_children(element),
+            "bdi" => self.render_children(element),
+            "bdo" => self.render_children(element),
             "blockquote" => self.render_blockquote_element(element),
-            "body" => self.render_body_element(element),
+            "body" => self.render_container_element(element),
             "br" => self.render_br_element(element),
-            "cite" => self.render_cite_element(element),
+            "cite" => self.render_children(element),
             "code" => self.render_code_element(element),
-            "data" => self.render_data_element(element),
-            "dd" => self.render_dd_element(element),
+            "data" => self.render_children(element),
+            "dd" => self.render_children(element),
             "del" => self.render_del_element(element),
-            "details" => self.render_details_element(element),
-            "dfn" => self.render_dfn_element(element),
-            "div" => self.render_div_element(element),
-            "dl" => self.render_dl_element(element),
+            "details" => self.render_children(element),
+            "dfn" => self.render_children(element),
+            "div" => self.render_children(element),
+            "dl" => self.render_children(element),
             "dt" => self.render_dt_element(element),
             "em" => self.render_em_element(element),
             "h1" => self.render_h1_element(element),
@@ -140,36 +140,36 @@ impl<'a> Renderer<'a> {
             "h6" => self.render_h6_element(element),
             "hr" => self.render_hr_element(element),
             "html" => self.render_html_element(element),
-            "i" => self.render_i_element(element),
-            "img" => self.render_img_element(element),
-            "ins" => self.render_ins_element(element),
-            "kbd" => self.render_kbd_element(element),
+            "i" => self.render_children(element),
+            "img" => self.render_element_in_html_form(element),
+            "ins" => self.render_children(element),
+            "kbd" => self.render_children(element),
             "li" => self.render_li_element(element),
-            "main" => self.render_main_element(element),
-            "mark" => self.render_mark_element(element),
-            "menu" => self.render_menu_element(element),
-            "nav" => self.render_nav_element(element),
-            "ol" => self.render_ol_element(element),
+            "main" => self.render_children(element),
+            "mark" => self.render_children(element),
+            "menu" => self.render_children(element),
+            "nav" => self.render_children(element),
+            "ol" => self.render_stacked_children(element),
             "p" => self.render_p_element(element),
-            "pre" => self.render_pre_element(element),
-            "q" => self.render_q_element(element),
-            "rp" => self.render_rp_element(element),
-            "rt" => self.render_rt_element(element),
-            "ruby" => self.render_ruby_element(element),
-            "s" => self.render_s_element(element),
-            "samp" => self.render_samp_element(element),
-            "section" => self.render_section_element(element),
-            "small" => self.render_small_element(element),
-            "span" => self.render_span_element(element),
+            "pre" => self.render_children(element),
+            "q" => self.render_children(element),
+            "rp" => self.render_nothing(element),
+            "rt" => self.render_nothing(element),
+            "ruby" => self.render_children(element),
+            "s" => self.render_children(element),
+            "samp" => self.render_children(element),
+            "section" => self.render_children(element),
+            "small" => self.render_children(element),
+            "span" => self.render_children(element),
             "strong" => self.render_strong_element(element),
-            "sub" => self.render_sub_element(element),
-            "summary" => self.render_summary_element(element),
-            "sup" => self.render_sup_element(element),
-            "time" => self.render_time_element(element),
-            "u" => self.render_u_element(element),
-            "ul" => self.render_ul_element(element),
-            "var" => self.render_var_element(element),
-            "wbr" => self.render_wbr_element(element),
+            "sub" => self.render_children(element),
+            "summary" => self.render_children(element),
+            "sup" => self.render_children(element),
+            "time" => self.render_children(element),
+            "u" => self.render_children(element),
+            "ul" => self.render_stacked_children(element),
+            "var" => self.render_children(element),
+            "wbr" => self.render_children(element),
 
             // table
             "table" => self.render_table_element(element),
@@ -302,34 +302,6 @@ impl<'a> Renderer<'a> {
         }
     }
 
-    fn render_abbr_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_address_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_article_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_aside_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_b_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_bdi_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_bdo_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
     fn render_blockquote_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_container_element(element)?;
 
@@ -340,16 +312,8 @@ impl<'a> Renderer<'a> {
         Ok(parts.join("\n"))
     }
 
-    fn render_body_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_container_element(element)
-    }
-
     fn render_br_element(&mut self, _: &Element) -> Result<String> {
         Ok(String::from("\n"))
-    }
-
-    fn render_cite_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
     }
 
     fn render_code_element(&mut self, element: &'a Element) -> Result<String> {
@@ -357,33 +321,9 @@ impl<'a> Renderer<'a> {
         Self::wrap(&content, "`", "`")
     }
 
-    fn render_data_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_dd_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
     fn render_del_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "~", "~")
-    }
-
-    fn render_details_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_dfn_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_div_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_dl_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
     }
 
     fn render_dt_element(&mut self, element: &'a Element) -> Result<String> {
@@ -438,22 +378,6 @@ impl<'a> Renderer<'a> {
         } else {
             unreachable!()
         }
-    }
-
-    fn render_i_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_img_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_element_in_html_form(element)
-    }
-
-    fn render_ins_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_kbd_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
     }
 
     fn render_li_element(&mut self, element: &'a Element) -> Result<String> {
@@ -514,86 +438,14 @@ impl<'a> Renderer<'a> {
         result
     }
 
-    fn render_main_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_mark_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_menu_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_nav_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_ol_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_stacked_children(element)
-    }
-
     fn render_p_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "", "")
     }
 
-    fn render_pre_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_q_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_rp_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_nothing(element)
-    }
-
-    fn render_rt_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_nothing(element)
-    }
-
-    fn render_ruby_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_s_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_samp_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_section_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_small_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_span_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
     fn render_strong_element(&mut self, element: &'a Element) -> Result<String> {
         let content = self.render_children(element)?;
         Self::wrap(&content, "**", "**")
-    }
-
-    fn render_sub_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_summary_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_sup_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
     }
 
     fn render_table_element(&mut self, element: &'a Element) -> Result<String> {
@@ -682,26 +534,6 @@ impl<'a> Renderer<'a> {
 
     fn render_td_element(&mut self, element: &'a Element) -> Result<String> {
         self.render_container_element(element)
-    }
-
-    fn render_time_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_u_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_ul_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_stacked_children(element)
-    }
-
-    fn render_var_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
-    }
-
-    fn render_wbr_element(&mut self, element: &'a Element) -> Result<String> {
-        self.render_children(element)
     }
 
     fn render_text(&mut self, content: &str) -> Result<String> {
