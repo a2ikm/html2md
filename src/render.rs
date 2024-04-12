@@ -502,11 +502,7 @@ impl<'a> Renderer<'a> {
 
         let mut matrix = Vec::with_capacity(numrows);
         for _ in 0..numrows {
-            let mut row = Vec::with_capacity(numcols);
-            for _ in 0..numcols {
-                row.push("");
-            }
-            matrix.push(row);
+            matrix.push(vec![""; numcols]);
         }
 
         for (col, cell) in cells.iter().enumerate() {
