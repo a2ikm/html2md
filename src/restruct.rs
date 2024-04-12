@@ -121,220 +121,146 @@ fn collect_tr_nodes(node: &Node) -> Vec<Node> {
 mod tests {
     use super::*;
 
+    fn new_element(tag_name: &str, children: Vec<Node>) -> Node {
+        Node::Element(Element::new_with_children(
+            tag_name,
+            &AttributeMap::new(),
+            children,
+        ))
+    }
+
+    fn new_text(content: &str) -> Node {
+        Node::Text(content.to_string())
+    }
+
     #[test]
     fn test_restruct_complete_structure() {
-        let original_node = Node::Element(Element::new_with_children(
+        let original_node = new_element(
             "body",
-            &AttributeMap::new(),
             vec![
-                Node::Element(Element::new_with_children(
+                new_element(
                     "table",
-                    &AttributeMap::new(),
                     vec![
-                        Node::Element(Element::new_with_children(
+                        new_element(
                             "thead",
-                            &AttributeMap::new(),
-                            vec![Node::Element(Element::new_with_children(
+                            vec![new_element(
                                 "tr",
-                                &AttributeMap::new(),
                                 vec![
-                                    Node::Element(Element::new_with_children(
-                                        "th",
-                                        &AttributeMap::new(),
-                                        vec![Node::Text("1,1".to_string())],
-                                    )),
-                                    Node::Element(Element::new_with_children(
-                                        "th",
-                                        &AttributeMap::new(),
-                                        vec![Node::Text("1,2".to_string())],
-                                    )),
+                                    new_element("th", vec![new_text("1,1")]),
+                                    new_element("th", vec![new_text("1,2")]),
                                 ],
-                            ))],
-                        )),
-                        Node::Element(Element::new_with_children(
+                            )],
+                        ),
+                        new_element(
                             "tbody",
-                            &AttributeMap::new(),
-                            vec![Node::Element(Element::new_with_children(
+                            vec![new_element(
                                 "tr",
-                                &AttributeMap::new(),
                                 vec![
-                                    Node::Element(Element::new_with_children(
-                                        "td",
-                                        &AttributeMap::new(),
-                                        vec![Node::Text("2,1".to_string())],
-                                    )),
-                                    Node::Element(Element::new_with_children(
-                                        "td",
-                                        &AttributeMap::new(),
-                                        vec![Node::Text("2,2".to_string())],
-                                    )),
+                                    new_element("td", vec![new_text("2,1")]),
+                                    new_element("td", vec![new_text("2,2")]),
                                 ],
-                            ))],
-                        )),
+                            )],
+                        ),
                     ],
-                )),
+                ),
                 Node::Text("Hello".to_string()),
             ],
-        ));
+        );
 
-        let expected_node = Node::Element(Element::new_with_children(
+        let expected_node = new_element(
             "body",
-            &AttributeMap::new(),
             vec![
-                Node::Element(Element::new_with_children(
+                new_element(
                     "table",
-                    &AttributeMap::new(),
                     vec![
-                        Node::Element(Element::new_with_children(
+                        new_element(
                             "thead",
-                            &AttributeMap::new(),
-                            vec![Node::Element(Element::new_with_children(
+                            vec![new_element(
                                 "tr",
-                                &AttributeMap::new(),
                                 vec![
-                                    Node::Element(Element::new_with_children(
-                                        "th",
-                                        &AttributeMap::new(),
-                                        vec![Node::Text("1,1".to_string())],
-                                    )),
-                                    Node::Element(Element::new_with_children(
-                                        "th",
-                                        &AttributeMap::new(),
-                                        vec![Node::Text("1,2".to_string())],
-                                    )),
+                                    new_element("th", vec![new_text("1,1")]),
+                                    new_element("th", vec![new_text("1,2")]),
                                 ],
-                            ))],
-                        )),
-                        Node::Element(Element::new_with_children(
+                            )],
+                        ),
+                        new_element(
                             "tbody",
-                            &AttributeMap::new(),
-                            vec![Node::Element(Element::new_with_children(
+                            vec![new_element(
                                 "tr",
-                                &AttributeMap::new(),
                                 vec![
-                                    Node::Element(Element::new_with_children(
-                                        "td",
-                                        &AttributeMap::new(),
-                                        vec![Node::Text("2,1".to_string())],
-                                    )),
-                                    Node::Element(Element::new_with_children(
-                                        "td",
-                                        &AttributeMap::new(),
-                                        vec![Node::Text("2,2".to_string())],
-                                    )),
+                                    new_element("td", vec![new_text("2,1")]),
+                                    new_element("td", vec![new_text("2,2")]),
                                 ],
-                            ))],
-                        )),
+                            )],
+                        ),
                     ],
-                )),
-                Node::Text("Hello".to_string()),
+                ),
+                new_text("Hello"),
             ],
-        ));
+        );
 
         assert_eq!(restruct(&original_node), expected_node);
     }
 
     #[test]
     fn test_restruct_no_thead_or_tbody() {
-        let original_node = Node::Element(Element::new_with_children(
+        let original_node = new_element(
             "body",
-            &AttributeMap::new(),
             vec![
-                Node::Element(Element::new_with_children(
+                new_element(
                     "table",
-                    &AttributeMap::new(),
                     vec![
-                        Node::Element(Element::new_with_children(
+                        new_element(
                             "tr",
-                            &AttributeMap::new(),
                             vec![
-                                Node::Element(Element::new_with_children(
-                                    "th",
-                                    &AttributeMap::new(),
-                                    vec![Node::Text("1,1".to_string())],
-                                )),
-                                Node::Element(Element::new_with_children(
-                                    "th",
-                                    &AttributeMap::new(),
-                                    vec![Node::Text("1,2".to_string())],
-                                )),
+                                new_element("th", vec![new_text("1,1")]),
+                                new_element("th", vec![new_text("1,2")]),
                             ],
-                        )),
-                        Node::Element(Element::new_with_children(
+                        ),
+                        new_element(
                             "tr",
-                            &AttributeMap::new(),
                             vec![
-                                Node::Element(Element::new_with_children(
-                                    "td",
-                                    &AttributeMap::new(),
-                                    vec![Node::Text("2,1".to_string())],
-                                )),
-                                Node::Element(Element::new_with_children(
-                                    "td",
-                                    &AttributeMap::new(),
-                                    vec![Node::Text("2,2".to_string())],
-                                )),
+                                new_element("td", vec![new_text("2,1")]),
+                                new_element("td", vec![new_text("2,2")]),
                             ],
-                        )),
+                        ),
                     ],
-                )),
-                Node::Text("Hello".to_string()),
+                ),
+                new_text("Hello"),
             ],
-        ));
+        );
 
-        let expected_node = Node::Element(Element::new_with_children(
+        let expected_node = new_element(
             "body",
-            &AttributeMap::new(),
             vec![
-                Node::Element(Element::new_with_children(
+                new_element(
                     "table",
-                    &AttributeMap::new(),
                     vec![
-                        Node::Element(Element::new_with_children(
+                        new_element(
                             "thead",
-                            &AttributeMap::new(),
-                            vec![Node::Element(Element::new_with_children(
+                            vec![new_element(
                                 "tr",
-                                &AttributeMap::new(),
                                 vec![
-                                    Node::Element(Element::new_with_children(
-                                        "th",
-                                        &AttributeMap::new(),
-                                        vec![Node::Text("1,1".to_string())],
-                                    )),
-                                    Node::Element(Element::new_with_children(
-                                        "th",
-                                        &AttributeMap::new(),
-                                        vec![Node::Text("1,2".to_string())],
-                                    )),
+                                    new_element("th", vec![new_text("1,1")]),
+                                    new_element("th", vec![new_text("1,2")]),
                                 ],
-                            ))],
-                        )),
-                        Node::Element(Element::new_with_children(
+                            )],
+                        ),
+                        new_element(
                             "tbody",
-                            &AttributeMap::new(),
-                            vec![Node::Element(Element::new_with_children(
+                            vec![new_element(
                                 "tr",
-                                &AttributeMap::new(),
                                 vec![
-                                    Node::Element(Element::new_with_children(
-                                        "td",
-                                        &AttributeMap::new(),
-                                        vec![Node::Text("2,1".to_string())],
-                                    )),
-                                    Node::Element(Element::new_with_children(
-                                        "td",
-                                        &AttributeMap::new(),
-                                        vec![Node::Text("2,2".to_string())],
-                                    )),
+                                    new_element("td", vec![new_text("2,1")]),
+                                    new_element("td", vec![new_text("2,2")]),
                                 ],
-                            ))],
-                        )),
+                            )],
+                        ),
                     ],
-                )),
-                Node::Text("Hello".to_string()),
+                ),
+                new_text("Hello"),
             ],
-        ));
+        );
 
         assert_eq!(restruct(&original_node), expected_node);
     }
