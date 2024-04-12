@@ -20,7 +20,7 @@ impl fmt::Display for RenderError {
 impl std::error::Error for RenderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
-            _ => None,
+            RenderError::OutsideOfList => None,
         }
     }
 }
