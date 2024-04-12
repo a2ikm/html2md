@@ -228,7 +228,7 @@ impl<'a> Renderer<'a> {
 
             match node {
                 Node::Element(child) => {
-                    if is_block_element(&child.tag) && part.len() > 0 {
+                    if is_block_element(&child.tag) && !part.is_empty() {
                         parts.push(part);
                         part = String::new();
                     }
@@ -261,7 +261,7 @@ impl<'a> Renderer<'a> {
         let mut open_tag = String::new();
         open_tag.push_str("<");
         open_tag.push_str(&element.tag);
-        if element.attributes.len() > 0 {
+        if !element.attributes.is_empty() {
             let mut names: Vec<&String> = element.attributes.keys().collect();
             names.sort();
 
@@ -548,7 +548,7 @@ fn decode_text<'a>(text: &'a str) -> String {
 }
 
 fn decode_text_tail_call<'a>(rest: &'a str, acc: &'a mut String) -> (&'a str, &'a String) {
-    if rest.len() == 0 {
+    if rest.is_empty() {
         return (rest, acc);
     }
 

@@ -78,11 +78,8 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn skip_whitespaces(&mut self) -> () {
-        loop {
-            match self.chars.next_if(|c| c.is_ascii_whitespace()) {
-                Some(_) => continue,
-                None => break,
-            }
+        while self.chars.next_if(|c| c.is_ascii_whitespace()).is_some() {
+            continue;
         }
     }
 
@@ -174,10 +171,10 @@ impl<'a> Tokenizer<'a> {
             }
         }
 
-        if tag.len() > 0 {
-            Ok(tag.to_ascii_lowercase())
-        } else {
+        if tag.is_empty() {
             Err(TokenizeError::NoTag)
+        } else {
+            Ok(tag.to_ascii_lowercase())
         }
     }
 
@@ -256,21 +253,15 @@ impl<'a> Tokenizer<'a> {
 
     fn read_text(&mut self) -> Result<Token> {
         let mut content = String::new();
-        loop {
-            match self.chars.next_if(|c| *c != '<') {
-                Some(c) => content.push(c),
-                None => break,
-            }
+        while let Some(c) = self.chars.next_if(|c| *c != '<') {
+            content.push(c)
         }
 
         Ok(Token::Text(content))
     }
 
     fn consume_char(&mut self, expected: char) -> bool {
-        match self.chars.next_if(|c| *c == expected) {
-            Some(_) => true,
-            None => false,
-        }
+        self.chars.next_if(|c| *c == expected).is_some()
     }
 
     fn expect_char(&mut self, expected: char) -> Result<()> {

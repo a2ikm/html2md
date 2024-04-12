@@ -74,7 +74,7 @@ fn restruct_table_element(element: &Element) -> Element {
         tr_nodes.append(&mut child_tr_nodes);
     }
 
-    if tr_nodes.len() == 0 {
+    if tr_nodes.is_empty() {
         return new_element;
     }
 
