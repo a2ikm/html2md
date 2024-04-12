@@ -106,10 +106,41 @@ pub fn is_void_element(tag_name: &str) -> bool {
 
 pub fn is_block_element(tag_name: &str) -> bool {
     match tag_name {
-        "address" | "article" | "aside" | "blockquote" | "canvas" | "dd" | "div" | "dl" | "dt"
-        | "fieldset" | "figcaption" | "figure" | "footer" | "form" | "h1" | "h2" | "h3" | "h4"
-        | "h5" | "h6" | "header" | "hr" | "li" | "main" | "nav" | "noscript" | "ol" | "p"
-        | "pre" | "section" | "table" | "tfoot" | "ul" | "video" => true,
+        "address"
+        | "article"
+        | "aside"
+        | "blockquote"
+        | "canvas"
+        | "dd"
+        | "div"
+        | "dl"
+        | "dt"
+        | "fieldset"
+        | "figcaption"
+        | "figure"
+        | "footer"
+        | "form"
+        | "h1"
+        | "h2"
+        | "h3"
+        | "h4"
+        | "h5"
+        | "h6"
+        | "header"
+        | "hr"
+        | "li"
+        | "main"
+        | "nav"
+        | "noscript"
+        | "ol"
+        | "p"
+        | "pre"
+        | "section"
+        | "table"
+        | "tfoot"
+        | "ul"
+        | "video"
+        | "html2md:successive-lists-wrapper" => true,
         _ => false,
     }
 }
