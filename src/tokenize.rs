@@ -156,12 +156,12 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn read_tag_name(&mut self) -> Result<String> {
-        let mut tag = String::new();
+        let mut name = String::new();
         loop {
             match self.chars.peek() {
                 Some(c) => {
                     if c.is_alphanumeric() {
-                        tag.push(*c);
+                        name.push(*c);
                         self.chars.next();
                         continue;
                     } else {
@@ -172,7 +172,7 @@ impl<'a> Tokenizer<'a> {
             }
         }
 
-        Ok(tag.to_ascii_lowercase())
+        Ok(name.to_ascii_lowercase())
     }
 
     fn read_attributes(&mut self) -> Result<(AttributeMap, bool)> {
