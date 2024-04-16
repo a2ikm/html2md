@@ -9,7 +9,6 @@ pub type Result<T> = std::result::Result<T, TokenizeError>;
 #[derive(Debug, PartialEq)]
 pub enum TokenizeError {
     Malformed,
-    NoTag,
     UnexpectedChar(char, char), // (expected, actual)
     UnexpectedEOF,
 }
@@ -20,7 +19,6 @@ impl fmt::Display for TokenizeError {
             TokenizeError::Malformed => {
                 write!(f, "syntactically malformed token found and ignored")
             }
-            TokenizeError::NoTag => write!(f, "no tag"),
             TokenizeError::UnexpectedChar(expected, actual) => {
                 write!(f, "expected {} but got {}", expected, actual)
             }
@@ -32,7 +30,6 @@ impl fmt::Display for TokenizeError {
 impl std::error::Error for TokenizeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
-            TokenizeError::NoTag => None,
             TokenizeError::Malformed => None,
             TokenizeError::UnexpectedChar(..) => None,
             TokenizeError::UnexpectedEOF => None,
@@ -123,6 +120,10 @@ impl<'a> Tokenizer<'a> {
         let name = self.read_tag_name()?;
         let (attributes, ending_with_slash) = self.read_attributes()?;
 
+        if name.is_empty() {
+            return Err(TokenizeError::Malformed);
+        }
+
         if is_void_element(&name) {
             // <foo> and <foo/> are allowed for void element. </foo> or </foo/> are not.
             if beginning_with_slash {
@@ -171,11 +172,7 @@ impl<'a> Tokenizer<'a> {
             }
         }
 
-        if tag.is_empty() {
-            Err(TokenizeError::NoTag)
-        } else {
-            Ok(tag.to_ascii_lowercase())
-        }
+        Ok(tag.to_ascii_lowercase())
     }
 
     fn read_attributes(&mut self) -> Result<(AttributeMap, bool)> {
@@ -426,11 +423,11 @@ mod tests {
     // }
 
     #[test]
-    fn test_tokenizer_tokenize_missing_tag_name() {
+    fn test_tokenizer_tokenize_missing_tag_name_is_ignored() {
         let mut t = Tokenizer::new("<>");
         match t.tokenize() {
-            Ok(tokens) => assert!(false, "Expected Err but got Ok({:?})", tokens),
-            Err(e) => assert_eq!(e, TokenizeError::NoTag),
+            Ok(tokens) => assert_eq!(tokens, vec![]),
+            Err(e) => assert!(false, "Expected Ok but got Err({:?})", e),
         }
     }
 
