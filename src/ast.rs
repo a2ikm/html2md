@@ -40,23 +40,27 @@ impl Node {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Element {
-    pub tag: String,
+    pub tag_name: String,
     pub children: Vec<Node>,
     pub attributes: AttributeMap,
 }
 
 impl Element {
-    pub fn new(tag: &str, attributes: &AttributeMap) -> Self {
+    pub fn new(tag_name: &str, attributes: &AttributeMap) -> Self {
         Self {
-            tag: tag.to_string(),
+            tag_name: tag_name.to_string(),
             children: Vec::new(),
             attributes: attributes.clone(),
         }
     }
 
-    pub fn new_with_children(tag: &str, attributes: &AttributeMap, children: Vec<Node>) -> Self {
+    pub fn new_with_children(
+        tag_name: &str,
+        attributes: &AttributeMap,
+        children: Vec<Node>,
+    ) -> Self {
         Self {
-            tag: tag.to_string(),
+            tag_name: tag_name.to_string(),
             children,
             attributes: attributes.clone(),
         }
@@ -92,7 +96,7 @@ impl Element {
     }
 
     pub fn is_list_element(&self) -> bool {
-        self.tag == "ul" || self.tag == "ol"
+        self.tag_name == "ul" || self.tag_name == "ol"
     }
 }
 

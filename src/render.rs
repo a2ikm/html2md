@@ -56,7 +56,7 @@ impl<'a> Context<'a> {
 
     fn get_last_list_tag(&mut self) -> Option<&str> {
         for item in self.items.iter().rev() {
-            let tag_name = &item.element.tag;
+            let tag_name = &item.element.tag_name;
             if tag_name == "ul" || tag_name == "ol" {
                 return Some(tag_name);
             }
@@ -66,7 +66,7 @@ impl<'a> Context<'a> {
 
     fn get_last_list_depth(&mut self) -> usize {
         for item in self.items.iter().rev() {
-            let tag_name = &item.element.tag;
+            let tag_name = &item.element.tag_name;
             if tag_name == "ul" || tag_name == "ol" {
                 return item.element.list_depth();
             }
@@ -76,7 +76,7 @@ impl<'a> Context<'a> {
 
     fn prefer_one_liner(&mut self) -> bool {
         for item in self.items.iter().rev().skip(1) {
-            let tag_name = &item.element.tag;
+            let tag_name = &item.element.tag_name;
             if tag_name == "th" || tag_name == "td" {
                 return true;
             }
@@ -119,7 +119,7 @@ impl<'a> Renderer<'a> {
     }
 
     fn render_element(&mut self, element: &'a Element) -> Result<String> {
-        match element.tag.as_str() {
+        match element.tag_name.as_str() {
             "a" => self.render_a_element(element),
             "abbr" => self.render_children(element),
             "address" => self.render_children(element),
@@ -238,7 +238,7 @@ impl<'a> Renderer<'a> {
 
             match node {
                 Node::Element(child) => {
-                    if is_block_element(&child.tag) && !part.is_empty() {
+                    if is_block_element(&child.tag_name) && !part.is_empty() {
                         parts.push(part);
                         part = String::new();
                     }
@@ -262,7 +262,7 @@ impl<'a> Renderer<'a> {
     fn render_unsupported_element(&mut self, element: &'a Element) -> Result<String> {
         eprintln!(
             "`{}` element is not supported. rendering nothing.",
-            element.tag
+            element.tag_name
         );
         self.render_nothing(element)
     }
@@ -270,7 +270,7 @@ impl<'a> Renderer<'a> {
     fn render_element_in_html_form(&mut self, element: &'a Element) -> Result<String> {
         let mut open_tag = String::new();
         open_tag.push('<');
-        open_tag.push_str(&element.tag);
+        open_tag.push_str(&element.tag_name);
         if !element.attributes.is_empty() {
             let mut names: Vec<&String> = element.attributes.keys().collect();
             names.sort();
@@ -282,11 +282,11 @@ impl<'a> Renderer<'a> {
         }
         open_tag.push('>');
 
-        if is_void_element(&element.tag) {
+        if is_void_element(&element.tag_name) {
             return Ok(open_tag);
         }
 
-        let close_tag = format!("</{}>", &element.tag);
+        let close_tag = format!("</{}>", &element.tag_name);
         let content = self.render_children(element)?;
 
         Self::wrap(&content, &open_tag, &close_tag)
@@ -385,7 +385,7 @@ impl<'a> Renderer<'a> {
 
     fn render_html_element(&mut self, element: &'a Element) -> Result<String> {
         if let Some(body_node) = element.children.iter().find(|node| match node {
-            Node::Element(e) => e.tag == "body",
+            Node::Element(e) => e.tag_name == "body",
             _ => false,
         }) {
             self.render_node(body_node)
@@ -482,7 +482,7 @@ impl<'a> Renderer<'a> {
         let Node::Element(element) = node else {
             unreachable!()
         };
-        if element.tag != "tr" {
+        if element.tag_name != "tr" {
             unreachable!()
         };
 

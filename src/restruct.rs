@@ -12,7 +12,7 @@ fn restruct_text(content: &str) -> Node {
 }
 
 fn restruct_element(element: &Element) -> Node {
-    let new_element = match element.tag.as_str() {
+    let new_element = match element.tag_name.as_str() {
         "table" => restruct_table_element(element),
         _ => restruct_arbitrary_element(element),
     };
@@ -21,7 +21,7 @@ fn restruct_element(element: &Element) -> Node {
 
 fn restruct_arbitrary_element(element: &Element) -> Element {
     let children = group_successive_lists(&element.children);
-    Element::new_with_children(&element.tag, &element.attributes, children)
+    Element::new_with_children(&element.tag_name, &element.attributes, children)
 }
 
 fn group_successive_lists(nodes: &Vec<Node>) -> Vec<Node> {
@@ -102,7 +102,7 @@ fn restruct_table_element(element: &Element) -> Element {
 
 fn collect_tr_nodes(node: &Node) -> Vec<Node> {
     match node {
-        Node::Element(element) => match element.tag.as_str() {
+        Node::Element(element) => match element.tag_name.as_str() {
             "tr" => vec![node.clone()],
             _ => {
                 let mut nodes = Vec::new();
