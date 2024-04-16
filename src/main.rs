@@ -224,13 +224,13 @@ mod tests {
     }
 
     #[test]
-    fn test_convert_table_including_multilines() {
+    fn test_convert_table_including_br() {
         let source =
                 "<!DOCTYPE html><html><head></head><body><table><thead><tr><th>1,1</th><th>1,2</th></tr></thead><tbody><tr><td>2<br>,<br>1</td><td>2<br>,<br>2</td></tr><tr><td>3<br>,<br>1</td><td>3,2</td></tr></tbody></table></body></html>";
         match convert(source) {
             Ok(result) => assert_eq!(
                 result,
-                "| 1,1 | 1,2 |\n|---|---|\n| 2 | 2 |\n| , | , |\n| 1 | 2 |\n| 3 | 3,2 |\n| , |  |\n| 1 |  |\n"
+                "| 1,1 | 1,2 |\n|---|---|\n| 2<br>,<br>1 | 2<br>,<br>2 |\n| 3<br>,<br>1 | 3,2 |\n"
             ),
             Err(e) => assert!(false, "Unexpected Err({:?})", e),
         }

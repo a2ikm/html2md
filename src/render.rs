@@ -73,6 +73,16 @@ impl<'a> Context<'a> {
         }
         0
     }
+
+    fn prefer_one_liner(&mut self) -> bool {
+        for item in self.items.iter().rev().skip(1) {
+            let tag_name = &item.element.tag;
+            if tag_name == "th" || tag_name == "td" {
+                return true;
+            }
+        }
+        false
+    }
 }
 
 pub struct Renderer<'a> {
@@ -312,8 +322,12 @@ impl<'a> Renderer<'a> {
         Ok(parts.join("\n"))
     }
 
-    fn render_br_element(&mut self, _: &Element) -> Result<String> {
-        Ok(String::from("\n"))
+    fn render_br_element(&mut self, element: &'a Element) -> Result<String> {
+        if self.ctx.prefer_one_liner() {
+            self.render_element_in_html_form(element)
+        } else {
+            Ok(String::from("\n"))
+        }
     }
 
     fn render_code_element(&mut self, element: &'a Element) -> Result<String> {
@@ -493,35 +507,7 @@ impl<'a> Renderer<'a> {
             cells.push(cell);
         }
 
-        let numcols = cells.len();
-        let numrows = cells
-            .iter()
-            .map(|cell| cell.lines().count())
-            .max()
-            .unwrap_or(0);
-
-        let mut matrix = Vec::with_capacity(numrows);
-        for _ in 0..numrows {
-            matrix.push(vec![""; numcols]);
-        }
-
-        for (col, cell) in cells.iter().enumerate() {
-            for (row, line) in cell.lines().enumerate() {
-                matrix[row][col] = line;
-            }
-        }
-
-        let mut parts = Vec::new();
-
-        for row in matrix {
-            let mut part = String::new();
-            part.push_str("| ");
-            part.push_str(&row.join(" | "));
-            part.push_str(" |");
-            parts.push(part);
-        }
-
-        Ok(parts.join("\n"))
+        Self::wrap(&cells.join(" | "), "| ", " |")
     }
 
     fn render_th_element(&mut self, element: &'a Element) -> Result<String> {
